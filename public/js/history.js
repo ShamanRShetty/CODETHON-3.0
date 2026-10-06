@@ -140,7 +140,7 @@ function renderShares(shares) {
 
   for (const share of shares) {
     const tr = document.createElement('tr');
-    tr.className = 'hover:bg-slate-800/40 cursor-pointer transition-colors group';
+    tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-colors group';
 
     // Clicking anywhere on row opens timeline
     tr.addEventListener('click', (e) => {
@@ -153,16 +153,16 @@ function renderShares(shares) {
     const tdName = document.createElement('td');
     tdName.className = 'px-6 py-4 whitespace-nowrap';
     const nameWrapper = document.createElement('div');
-    nameWrapper.className = 'flex items-center gap-2.5';
+    nameWrapper.className = 'flex items-center gap-3';
     nameWrapper.innerHTML = `
-      <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
+      <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-sm">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
         </svg>
       </div>
     `;
     const nameText = document.createElement('span');
-    nameText.className = 'font-medium text-slate-200 group-hover:text-cyan-400 transition-colors';
+    nameText.className = 'font-semibold text-slate-900 dark:text-slate-100 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors';
     nameText.textContent = share.fileName || 'Untitled File';
     nameWrapper.appendChild(nameText);
     tdName.appendChild(nameWrapper);
@@ -174,10 +174,10 @@ function renderShares(shares) {
 
     // 3. Recipients
     const tdRecipients = document.createElement('td');
-    tdRecipients.className = 'px-6 py-4 whitespace-nowrap text-slate-300';
+    tdRecipients.className = 'px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-300';
     if (share.recipients && share.recipients.length > 0) {
       const recSpan = document.createElement('span');
-      recSpan.className = 'inline-flex items-center gap-1 text-slate-300';
+      recSpan.className = 'inline-flex items-center gap-1 font-medium';
       recSpan.textContent =
         share.recipients.length === 1
           ? share.recipients[0]
@@ -186,24 +186,24 @@ function renderShares(shares) {
       tdRecipients.appendChild(recSpan);
     } else {
       const openSpan = document.createElement('span');
-      openSpan.className = 'text-slate-500 italic';
+      openSpan.className = 'text-slate-400 dark:text-slate-500 italic';
       openSpan.textContent = 'Open (Anyone with link)';
       tdRecipients.appendChild(openSpan);
     }
 
     // 4. Downloads
     const tdDownloads = document.createElement('td');
-    tdDownloads.className = 'px-6 py-4 whitespace-nowrap text-slate-300 font-mono';
+    tdDownloads.className = 'px-6 py-4 whitespace-nowrap text-slate-700 dark:text-slate-300 font-mono font-medium';
     tdDownloads.textContent = `${share.downloadCount} / ${share.maxDownloads !== null && share.maxDownloads !== undefined ? share.maxDownloads : '∞'}`;
 
     // 5. Expiry
     const tdExpires = document.createElement('td');
-    tdExpires.className = 'px-6 py-4 whitespace-nowrap text-slate-400';
+    tdExpires.className = 'px-6 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400';
     tdExpires.textContent = UI.formatDate(share.expiresAt);
 
     // 6. Created
     const tdCreated = document.createElement('td');
-    tdCreated.className = 'px-6 py-4 whitespace-nowrap text-slate-400';
+    tdCreated.className = 'px-6 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400';
     tdCreated.textContent = UI.formatDate(share.createdAt);
 
     // 7. Actions
@@ -214,9 +214,9 @@ function renderShares(shares) {
     const btnTimeline = document.createElement('a');
     btnTimeline.href = `/timeline.html?share=${share.id}`;
     btnTimeline.className =
-      'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition-colors';
+      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-colors shadow-sm';
     btnTimeline.innerHTML = `
-      <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
       Timeline
@@ -228,7 +228,7 @@ function renderShares(shares) {
       const btnRevoke = document.createElement('button');
       btnRevoke.type = 'button';
       btnRevoke.className =
-        'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-medium border border-rose-500/30 transition-colors';
+        'inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-semibold border border-rose-200 dark:border-rose-500/30 transition-colors';
       btnRevoke.textContent = 'Revoke';
       btnRevoke.addEventListener('click', (e) => {
         e.stopPropagation();

@@ -100,7 +100,7 @@ function renderRecentActivity(activities) {
   for (const act of activities) {
     const isSuccess = act.success === 1;
     const tr = document.createElement('tr');
-    tr.className = 'hover:bg-slate-800/40 cursor-pointer transition-colors group';
+    tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-colors group';
 
     tr.addEventListener('click', () => {
       if (act.shareId) {
@@ -110,7 +110,7 @@ function renderRecentActivity(activities) {
 
     // 1. File Name
     const tdFile = document.createElement('td');
-    tdFile.className = 'px-6 py-3.5 whitespace-nowrap font-medium text-slate-200 group-hover:text-cyan-400 transition-colors';
+    tdFile.className = 'px-6 py-3.5 whitespace-nowrap font-semibold text-slate-900 dark:text-slate-200 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors';
     tdFile.textContent = act.fileName || 'Untitled File';
 
     // 2. Reason / Result Badge
@@ -118,24 +118,24 @@ function renderRecentActivity(activities) {
     tdResult.className = 'px-6 py-3.5 whitespace-nowrap';
     const badge = document.createElement('span');
     badge.className = isSuccess
-      ? 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-      : 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-500/10 text-rose-400 border border-rose-500/30';
+      ? 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30'
+      : 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30';
     badge.textContent = act.reason || (isSuccess ? 'OK' : 'BLOCKED');
     tdResult.appendChild(badge);
 
     // 3. Recipient Email
     const tdEmail = document.createElement('td');
-    tdEmail.className = 'px-6 py-3.5 whitespace-nowrap text-slate-300';
+    tdEmail.className = 'px-6 py-3.5 whitespace-nowrap text-slate-700 dark:text-slate-300 font-medium';
     tdEmail.textContent = act.userEmail || (isSuccess ? 'Public Visitor' : 'Unspecified');
 
     // 4. IP Address
     const tdIp = document.createElement('td');
-    tdIp.className = 'px-6 py-3.5 whitespace-nowrap font-mono text-slate-400';
+    tdIp.className = 'px-6 py-3.5 whitespace-nowrap font-mono text-slate-500 dark:text-slate-400';
     tdIp.textContent = act.ip || '-';
 
     // 5. Timestamp
     const tdTime = document.createElement('td');
-    tdTime.className = 'px-6 py-3.5 whitespace-nowrap text-right text-slate-400 font-mono text-[11px]';
+    tdTime.className = 'px-6 py-3.5 whitespace-nowrap text-right text-slate-500 dark:text-slate-400 font-mono text-[11px]';
     tdTime.textContent = `${UI.formatDate(act.at)} (${UI.formatRelativeTime(act.at)})`;
 
     tr.appendChild(tdFile);

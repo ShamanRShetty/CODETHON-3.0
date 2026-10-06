@@ -126,8 +126,8 @@ function renderLogs(logs) {
     // Timeline Dot / Icon
     const dot = document.createElement('div');
     dot.className = isSuccess
-      ? 'absolute -left-[30px] w-5 h-5 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center shrink-0 text-emerald-400 shadow-sm shadow-emerald-500/30'
-      : 'absolute -left-[30px] w-5 h-5 rounded-full bg-rose-500/20 border-2 border-rose-400 flex items-center justify-center shrink-0 text-rose-400 shadow-sm shadow-rose-500/30';
+      ? 'absolute -left-[30px] w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 dark:border-emerald-400 flex items-center justify-center shrink-0 text-emerald-600 dark:text-emerald-400 shadow-sm shadow-emerald-500/30'
+      : 'absolute -left-[30px] w-5 h-5 rounded-full bg-rose-100 dark:bg-rose-500/20 border-2 border-rose-500 dark:border-rose-400 flex items-center justify-center shrink-0 text-rose-600 dark:text-rose-400 shadow-sm shadow-rose-500/30';
 
     dot.innerHTML = isSuccess
       ? `<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>`
@@ -136,8 +136,8 @@ function renderLogs(logs) {
     // Log Card
     const card = document.createElement('div');
     card.className = isSuccess
-      ? 'flex-1 bg-slate-900/80 border border-emerald-500/30 rounded-xl p-4 shadow-lg hover:border-emerald-500/50 transition-colors space-y-2'
-      : 'flex-1 bg-slate-900/80 border border-rose-500/30 rounded-xl p-4 shadow-lg hover:border-rose-500/50 transition-colors space-y-2';
+      ? 'flex-1 bg-white dark:bg-slate-900/80 border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:border-emerald-400 dark:hover:border-emerald-500/50 transition-all space-y-2.5'
+      : 'flex-1 bg-white dark:bg-slate-900/80 border border-rose-200 dark:border-rose-500/30 rounded-xl p-4 sm:p-5 shadow-md hover:shadow-lg hover:border-rose-400 dark:hover:border-rose-500/50 transition-all space-y-2.5';
 
     // Header Row: Title + Reason Badge + Timestamp
     const headerRow = document.createElement('div');
@@ -147,14 +147,14 @@ function renderLogs(logs) {
     titleGroup.className = 'flex items-center gap-2';
 
     const title = document.createElement('h4');
-    title.className = 'text-xs font-semibold text-slate-100';
+    title.className = 'text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100';
     title.textContent = isSuccess ? 'Download Succeeded' : 'Blocked Access Attempt';
 
     // Reason Badge
     const reasonBadge = document.createElement('span');
     reasonBadge.className = isSuccess
-      ? 'px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-      : 'px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20';
+      ? 'px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+      : 'px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20';
     reasonBadge.textContent = log.reason || (isSuccess ? 'OK' : 'BLOCKED');
 
     titleGroup.appendChild(title);
@@ -162,7 +162,7 @@ function renderLogs(logs) {
 
     // Timestamp
     const timeSpan = document.createElement('span');
-    timeSpan.className = 'text-[11px] text-slate-400 font-mono';
+    timeSpan.className = 'text-[11px] text-slate-500 dark:text-slate-400 font-mono';
     timeSpan.textContent = `${UI.formatDate(log.at)} (${UI.formatRelativeTime(log.at)})`;
 
     headerRow.appendChild(titleGroup);
@@ -170,18 +170,18 @@ function renderLogs(logs) {
 
     // Detail Row: Email & IP info
     const detailRow = document.createElement('div');
-    detailRow.className = 'flex flex-wrap items-center gap-4 text-xs text-slate-300 pt-1 border-t border-slate-800/60';
+    detailRow.className = 'flex flex-wrap items-center gap-4 text-xs text-slate-700 dark:text-slate-300 pt-2 border-t border-slate-100 dark:border-slate-800/60';
 
     // Email
     const emailGroup = document.createElement('div');
     emailGroup.className = 'flex items-center gap-1.5';
     emailGroup.innerHTML = `
-      <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206"/>
       </svg>
     `;
     const emailText = document.createElement('span');
-    emailText.className = 'font-medium';
+    emailText.className = 'font-semibold text-slate-800 dark:text-slate-200';
     emailText.textContent = log.email || (isSuccess ? 'Anonymous / Public' : 'Unspecified');
     emailGroup.appendChild(emailText);
 
@@ -189,12 +189,12 @@ function renderLogs(logs) {
     const ipGroup = document.createElement('div');
     ipGroup.className = 'flex items-center gap-1.5';
     ipGroup.innerHTML = `
-      <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
       </svg>
     `;
     const ipText = document.createElement('span');
-    ipText.className = 'font-mono text-slate-400';
+    ipText.className = 'font-mono text-slate-500 dark:text-slate-400';
     ipText.textContent = log.ip || 'Unknown IP';
     ipGroup.appendChild(ipText);
 
