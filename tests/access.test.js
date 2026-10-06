@@ -300,4 +300,57 @@ describe('Access Checker (src/lib/access.js)', () => {
     const finalShare = db.prepare('SELECT download_count FROM shares WHERE id = ?').get(shareId);
     assert.strictEqual(finalShare.download_count, 1);
   });
+
+  test('Branch 10: Failed decryption does NOT increment download count or record success log', async () => {
+    // Create a corrupted file record whose wrapped_key or auth_tag is invalid
+    const now = Date.now();
+    const badFileRes = db
+      .prepare(
+        `INSERT INTO files (owner_id, original_name, stored_name, size, mime, wrapped_key, iv, auth_tag, uploaded_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        ownerId,
+        'Corrupted.txt',
+        'stored_board_minutes.bin', // points to valid ciphertext, but we tamper keys below
+        100,
+        'text/plain',
+        '000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+        '000000000000000000000000',
+        '00000000000000000000000000000000',
+        now
+      );
+    const badFileId = Number(badFileRes.lastInsertRowid);
+
+    const token = generateToken();
+    const badShareRes = db
+      .prepare(
+        `INSERT INTO shares (file_id, token_hash, expires_at, revoked_at, max_downloads, download_count, created_at)
+         VALUES (?, ?, ?, NULL, 5, 0, ?)`
+      )
+      .run(badFileId, hashToken(token), now + 3600000, now);
+    const badShareId = Number(badShareRes.lastInsertRowid);
+
+    await assert.rejects(
+      async () => {
+        await consumeDownload({
+          shareId: badShareId,
+          email: 'test@example.com',
+          ip: '127.0.0.1',
+          userAgent: 'TestAgent',
+        });
+      },
+      (err) => {
+        return err !== null;
+      }
+    );
+
+    // Download count must remain 0
+    const shareAfter = db.prepare('SELECT download_count FROM shares WHERE id = ?').get(badShareId);
+    assert.strictEqual(shareAfter.download_count, 0, 'download_count must not increment on decrypt failure');
+
+    // No success log should exist
+    const logs = db.prepare('SELECT * FROM download_logs WHERE share_id = ? AND success = 1').all(badShareId);
+    assert.strictEqual(logs.length, 0, 'No success log should be written on decrypt failure');
+  });
 });

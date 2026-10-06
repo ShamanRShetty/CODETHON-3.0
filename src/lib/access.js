@@ -176,46 +176,70 @@ function checkAccess({ token, otpSession, password, ip, userAgent }) {
  * @returns {Promise<{ buffer: Buffer, originalName: string, mime: string, size: number }>}
  */
 async function consumeDownload({ shareId, email, ip, userAgent }) {
-  let shareData;
+  const now = Date.now();
+  const share = db
+    .prepare(
+      `SELECT
+         s.id,
+         s.file_id,
+         s.expires_at,
+         s.revoked_at,
+         s.max_downloads,
+         s.download_count,
+         f.owner_id,
+         f.original_name,
+         f.stored_name,
+         f.size,
+         f.mime,
+         f.wrapped_key,
+         f.iv,
+         f.auth_tag
+       FROM shares s
+       JOIN files f ON s.file_id = f.id
+       WHERE s.id = ? AND f.deleted_at IS NULL`
+    )
+    .get(shareId);
 
+  if (!share) {
+    throw new Error('NOT_FOUND');
+  }
+
+  if (share.revoked_at != null) {
+    throw new Error('REVOKED');
+  }
+
+  if (now > share.expires_at) {
+    throw new Error('EXPIRED');
+  }
+
+  if (share.max_downloads != null && share.download_count >= share.max_downloads) {
+    throw new Error('LIMIT');
+  }
+
+  // Decrypt file BEFORE committing download count and success log
+  const storedPath = path.join(storageDir, share.stored_name);
+  const ciphertext = await fs.promises.readFile(storedPath);
+
+  // If decryption fails, decryptFile throws and zero partial data or count increment happens
+  const buffer = decryptFile({
+    ciphertext,
+    wrappedKey: share.wrapped_key,
+    iv: share.iv,
+    authTag: share.auth_tag,
+  });
+
+  // Atomic SQLite transaction: verify limits and increment download count + log
   const tx = db.transaction(() => {
-    const now = Date.now();
-    const share = db
-      .prepare(
-        `SELECT
-           s.id,
-           s.file_id,
-           s.expires_at,
-           s.revoked_at,
-           s.max_downloads,
-           s.download_count,
-           f.owner_id,
-           f.original_name,
-           f.stored_name,
-           f.size,
-           f.mime,
-           f.wrapped_key,
-           f.iv,
-           f.auth_tag
-         FROM shares s
-         JOIN files f ON s.file_id = f.id
-         WHERE s.id = ? AND f.deleted_at IS NULL`
-      )
+    const txNow = Date.now();
+    const current = db
+      .prepare('SELECT download_count, max_downloads, revoked_at, expires_at FROM shares WHERE id = ?')
       .get(shareId);
 
-    if (!share) {
-      throw new Error('NOT_FOUND');
+    if (!current || current.revoked_at != null || txNow > current.expires_at) {
+      throw new Error('REVOKED_OR_EXPIRED');
     }
 
-    if (share.revoked_at != null) {
-      throw new Error('REVOKED');
-    }
-
-    if (now > share.expires_at) {
-      throw new Error('EXPIRED');
-    }
-
-    if (share.max_downloads != null && share.download_count >= share.max_downloads) {
+    if (current.max_downloads != null && current.download_count >= current.max_downloads) {
       throw new Error('LIMIT');
     }
 
@@ -226,7 +250,7 @@ async function consumeDownload({ shareId, email, ip, userAgent }) {
     db.prepare(
       `INSERT INTO download_logs (share_id, user_email, ip, user_agent, success, reason, at)
        VALUES (?, ?, ?, ?, 1, 'OK', ?)`
-    ).run(shareId, email || null, ip || null, userAgent || null, now);
+    ).run(shareId, email || null, ip || null, userAgent || null, txNow);
 
     // Insert owner notification
     const recipientInfo = email ? email : ip ? `visitor from ${ip}` : 'visitor';
@@ -235,31 +259,17 @@ async function consumeDownload({ shareId, email, ip, userAgent }) {
       shareId,
       'OK',
       `File "${share.original_name}" was downloaded by ${recipientInfo}`,
-      now
+      txNow
     );
-
-    shareData = share;
   });
 
   tx();
 
-  // Decrypt file only after transaction succeeds
-  const storedPath = path.join(storageDir, shareData.stored_name);
-  const ciphertext = await fs.promises.readFile(storedPath);
-
-  // If decryption fails, decryptFile throws and zero partial data is returned
-  const buffer = decryptFile({
-    ciphertext,
-    wrappedKey: shareData.wrapped_key,
-    iv: shareData.iv,
-    authTag: shareData.auth_tag,
-  });
-
   return {
     buffer,
-    originalName: shareData.original_name,
-    mime: shareData.mime || 'application/octet-stream',
-    size: shareData.size,
+    originalName: share.original_name,
+    mime: share.mime || 'application/octet-stream',
+    size: share.size,
   };
 }
 

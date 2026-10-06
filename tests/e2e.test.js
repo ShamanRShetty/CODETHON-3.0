@@ -233,9 +233,9 @@ describe('End-to-End Workflow (tests/e2e.test.js)', () => {
     });
 
     assert.strictEqual(downloadRes.status, 200, 'Authorized download must return 200');
-    assert.strictEqual(
+    assert.match(
       downloadRes.headers.get('content-disposition'),
-      'attachment; filename="Confidential_Report.pdf"'
+      /attachment;\s*filename="Confidential_Report\.pdf"/
     );
     assert.strictEqual(downloadRes.headers.get('x-content-type-options'), 'nosniff');
     assert.strictEqual(downloadRes.headers.get('cache-control'), 'no-store');

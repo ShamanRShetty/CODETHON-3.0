@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const db = require('../db');
 const config = require('../config');
 const { sendOtpMail } = require('./mailer');
+const { notify } = require('./notifier');
 
 function getOtpSecret() {
   return process.env.OTP_SECRET || config.OTP_SECRET;
@@ -19,6 +20,21 @@ function logOtpFailure(shareId, email, ip, userAgent, reason) {
       `INSERT INTO download_logs (share_id, user_email, ip, user_agent, success, reason, at)
        VALUES (?, ?, ?, ?, 0, ?, ?)`
     ).run(shareId, email || null, ip || null, userAgent || null, reason, now);
+
+    if (shareId) {
+      const share = db
+        .prepare('SELECT s.id, f.owner_id FROM shares s JOIN files f ON s.file_id = f.id WHERE s.id = ?')
+        .get(shareId);
+      if (share && share.owner_id) {
+        notify(
+          share.owner_id,
+          shareId,
+          reason,
+          `Blocked OTP attempt (${reason}): ${email || 'unknown'} from ${ip || 'unknown IP'}`,
+          now
+        );
+      }
+    }
   } catch (err) {
     console.error('[OTP Service] Failed to log failure:', err.message);
   }
@@ -51,6 +67,8 @@ async function requestOtp(shareId, email, { ip, userAgent } = {}) {
     .get(shareId, normalizedEmail);
 
   if (!recipient) {
+    // Record stranger access attempt per PRD D-02
+    logOtpFailure(shareId, normalizedEmail, ip, userAgent, 'NOT_ON_LIST');
     return genericResponse;
   }
 

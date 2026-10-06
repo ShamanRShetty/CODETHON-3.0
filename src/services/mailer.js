@@ -37,7 +37,7 @@ async function sendMail({ to, subject, text, html }) {
   if (mailMode === 'console') {
     // Only place where OTP is permitted to be logged per Rule 01
     console.log(`\n========================================`);
-    console.log(`[MoVo Mailer - Console Mode]`);
+    console.log(`[VaultLink Mailer - Console Mode]`);
     console.log(`To: ${to}`);
     console.log(`Subject: ${subject}`);
     console.log(`Body: ${text}`);
@@ -45,18 +45,23 @@ async function sendMail({ to, subject, text, html }) {
     return { success: true, messageId: 'console-' + Date.now() };
   }
 
-  const transport = getTransporter();
-  const from = config.SMTP_USER || 'noreply@movo.local';
+  try {
+    const transport = getTransporter();
+    const from = config.SMTP_USER || 'noreply@vaultlink.local';
 
-  const info = await transport.sendMail({
-    from,
-    to,
-    subject,
-    text,
-    html: html || text,
-  });
+    const info = await transport.sendMail({
+      from,
+      to,
+      subject,
+      text,
+      html: html || text,
+    });
 
-  return { success: true, messageId: info.messageId, info };
+    return { success: true, messageId: info.messageId, info };
+  } catch (err) {
+    console.error(`[VaultLink Mailer] Failed to send email to ${to}:`, err.message);
+    throw err;
+  }
 }
 
 /**
@@ -69,9 +74,9 @@ async function sendMail({ to, subject, text, html }) {
  * @returns {Promise<{ success: boolean }>}
  */
 async function sendOtpMail({ to, code, shareId }) {
-  const subject = 'Your MoVo verification code';
-  const text = `Your MoVo verification code is: ${code}\n\nThis code will expire in 5 minutes and can only be used once. If you did not request this code, you can safely ignore this email.`;
-  const html = `<p>Your MoVo verification code is: <strong>${code}</strong></p><p>This code will expire in 5 minutes and can only be used once.</p><p>If you did not request this code, you can safely ignore this email.</p>`;
+  const subject = 'Your VaultLink verification code';
+  const text = `Your VaultLink verification code is: ${code}\n\nThis code will expire in 5 minutes and can only be used once. If you did not request this code, you can safely ignore this email.`;
+  const html = `<p>Your VaultLink verification code is: <strong>${code}</strong></p><p>This code will expire in 5 minutes and can only be used once.</p><p>If you did not request this code, you can safely ignore this email.</p>`;
 
   return sendMail({
     to,
@@ -85,3 +90,4 @@ module.exports = {
   sendMail,
   sendOtpMail,
 };
+

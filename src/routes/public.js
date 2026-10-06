@@ -14,8 +14,8 @@ const sHtmlPath = path.resolve(process.cwd(), 'public', 's.html');
 // Helper to find OTP session cookie for any share or specific share
 function getOtpSessionCookie(req, shareId) {
   if (!req.cookies) return null;
-  if (shareId && req.cookies[`otp_${shareId}`]) {
-    return req.cookies[`otp_${shareId}`];
+  if (shareId) {
+    return req.cookies[`otp_${shareId}`] || null;
   }
   const otpKey = Object.keys(req.cookies).find((k) => k.startsWith('otp_'));
   return otpKey ? req.cookies[otpKey] : null;
@@ -91,17 +91,19 @@ router.post('/:token/otp/verify', otpVerifyLimiter, (req, res) => {
     return res.status(400).json(genericError);
   }
 
-  // Generate signed OTP session cookie
+  // Generate signed OTP session JWT
   const otpSessionToken = signOtpSession({
     shareId: share.id,
     email: result.email,
     shareExpiresAt: share.expires_at,
   });
 
+  const isSecure = req.secure || process.env.NODE_ENV === 'production';
+
   res.cookie(`otp_${share.id}`, otpSessionToken, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: isSecure,
     maxAge: 30 * 60 * 1000,
   });
 
@@ -114,7 +116,17 @@ router.post('/:token/download', downloadLimiter, async (req, res) => {
   const password = req.body?.password;
   const ip = req.ip || req.socket?.remoteAddress || 'unknown';
   const userAgent = req.headers['user-agent'] || 'unknown';
-  const otpSession = getOtpSessionCookie(req);
+
+  let shareId = null;
+  if (token) {
+    const tokenHash = hashToken(token);
+    const row = db.prepare('SELECT id FROM shares WHERE token_hash = ?').get(tokenHash);
+    if (row) {
+      shareId = row.id;
+    }
+  }
+
+  const otpSession = getOtpSessionCookie(req, shareId);
 
   try {
     const access = checkAccess({
@@ -137,9 +149,15 @@ router.post('/:token/download', downloadLimiter, async (req, res) => {
       userAgent,
     });
 
-    // 4 Mandatory download headers per ARCHITECTURE.md section 9
-    const sanitisedFilename = (download.originalName || 'file.bin').replace(/["\r\n\\]/g, '_');
-    res.setHeader('Content-Disposition', `attachment; filename="${sanitisedFilename}"`);
+    // 4 Mandatory download headers per ARCHITECTURE.md section 9 + RFC 5987 / 6266 UTF-8 support
+    const originalName = download.originalName || 'file.bin';
+    const asciiFallback = originalName.replace(/[^\x20-\x7E]/g, '_').replace(/["\r\n\\]/g, '_');
+    const encodedFilename = encodeURIComponent(originalName);
+
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodedFilename}`
+    );
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'no-store');

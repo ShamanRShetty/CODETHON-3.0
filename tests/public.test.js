@@ -12,6 +12,8 @@ const { signOtpSession } = require('../src/lib/otpSession');
 const config = require('../src/config');
 const crypto = require('crypto');
 
+const storageDir = path.resolve(process.cwd(), 'storage');
+
 describe('Public Download API (src/routes/public.js)', () => {
   let server;
   let baseUrl;
@@ -368,4 +370,135 @@ describe('Public Download API (src/routes/public.js)', () => {
     assert.strictEqual(resWrongOtp.status, 404);
     assert.deepStrictEqual(await resWrongOtp.json(), expectedError);
   });
+
+  test('POST /s/:token/otp/request logs NOT_ON_LIST in download_logs for stranger email (PRD D-02)', async () => {
+    const token = generateToken();
+    const tokenHash = hashToken(token);
+    const now = Date.now();
+    const allowedEmail = 'allowed_member@example.com';
+    const strangerEmail = 'stranger_attacker@example.com';
+
+    const shareRes = db
+      .prepare(
+        `INSERT INTO shares (file_id, token_hash, expires_at, revoked_at, max_downloads, download_count, restricted, created_at)
+         VALUES (?, ?, ?, NULL, NULL, 0, 1, ?)`
+      )
+      .run(fileId, tokenHash, now + 3600000, now);
+    const shareId = Number(shareRes.lastInsertRowid);
+    db.prepare('INSERT INTO share_recipients (share_id, email) VALUES (?, ?)').run(shareId, allowedEmail);
+
+    const res = await fetch(`${baseUrl}/s/${token}/otp/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: strangerEmail }),
+    });
+
+    assert.strictEqual(res.status, 200);
+    const body = await res.json();
+    assert.strictEqual(body.message, 'If this email is allowed, a code was sent');
+
+    // Verify audit log has stranger attempt recorded
+    const log = db
+      .prepare('SELECT * FROM download_logs WHERE share_id = ? AND user_email = ?')
+      .get(shareId, strangerEmail);
+
+    assert.ok(log, 'Stranger OTP request must be logged in download_logs');
+    assert.strictEqual(log.success, 0);
+    assert.strictEqual(log.reason, 'NOT_ON_LIST');
+  });
+
+  test('POST /s/:token/download correctly resolves share-specific cookie when recipient verified multiple shares', async () => {
+    const now = Date.now();
+    const email = 'multishare@example.com';
+
+    // Share 1
+    const token1 = generateToken();
+    const s1Res = db
+      .prepare(
+        `INSERT INTO shares (file_id, token_hash, expires_at, revoked_at, max_downloads, download_count, restricted, created_at)
+         VALUES (?, ?, ?, NULL, NULL, 0, 1, ?)`
+      )
+      .run(fileId, hashToken(token1), now + 3600000, now);
+    const share1Id = Number(s1Res.lastInsertRowid);
+    db.prepare('INSERT INTO share_recipients (share_id, email) VALUES (?, ?)').run(share1Id, email);
+
+    // Share 2
+    const token2 = generateToken();
+    const s2Res = db
+      .prepare(
+        `INSERT INTO shares (file_id, token_hash, expires_at, revoked_at, max_downloads, download_count, restricted, created_at)
+         VALUES (?, ?, ?, NULL, NULL, 0, 1, ?)`
+      )
+      .run(fileId, hashToken(token2), now + 3600000, now);
+    const share2Id = Number(s2Res.lastInsertRowid);
+    db.prepare('INSERT INTO share_recipients (share_id, email) VALUES (?, ?)').run(share2Id, email);
+
+    const cookie1 = signOtpSession({ shareId: share1Id, email });
+    const cookie2 = signOtpSession({ shareId: share2Id, email });
+
+    // Client sends both cookies
+    const multiCookieHeader = `otp_${share1Id}=${cookie1}; otp_${share2Id}=${cookie2}`;
+
+    // Download share 2
+    const res2 = await fetch(`${baseUrl}/s/${token2}/download`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: multiCookieHeader,
+      },
+      body: JSON.stringify({}),
+    });
+
+    assert.strictEqual(res2.status, 200, 'Download share 2 must succeed with multi-share cookies present');
+  });
+
+  test('POST /s/:token/download supports non-Latin UTF-8 filenames (Kannada, Hindi, Emoji)', async () => {
+    const fs = require('fs');
+    const { encryptFile } = require('../src/lib/crypto');
+
+    const utf8Filename = 'ಕನ್ನಡ_दस्तावेज़_🔒_report.pdf';
+    const content = Buffer.from('UTF-8 test content');
+    const encrypted = encryptFile(content);
+    const storedName = 'utf8_test_file.bin';
+    fs.writeFileSync(path.join(storageDir, storedName), encrypted.ciphertext);
+
+    const now = Date.now();
+    const fRes = db
+      .prepare(
+        `INSERT INTO files (owner_id, original_name, stored_name, size, mime, wrapped_key, iv, auth_tag, uploaded_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        ownerId,
+        utf8Filename,
+        storedName,
+        content.length,
+        'application/pdf',
+        encrypted.wrappedKey,
+        encrypted.iv,
+        encrypted.authTag,
+        now
+      );
+    const utf8FileId = Number(fRes.lastInsertRowid);
+
+    const token = generateToken();
+    db.prepare(
+      `INSERT INTO shares (file_id, token_hash, expires_at, revoked_at, max_downloads, download_count, created_at)
+       VALUES (?, ?, ?, NULL, NULL, 0, ?)`
+    ).run(utf8FileId, hashToken(token), now + 3600000, now);
+
+    const res = await fetch(`${baseUrl}/s/${token}/download`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+
+    assert.strictEqual(res.status, 200);
+    const disposition = res.headers.get('content-disposition');
+    assert.ok(disposition, 'Must have Content-Disposition header');
+    assert.ok(disposition.includes("filename*=UTF-8''"), 'Must include RFC 5987 UTF-8 encoded filename');
+    const buffer = await res.arrayBuffer();
+    assert.strictEqual(Buffer.from(buffer).toString('utf8'), 'UTF-8 test content');
+  });
 });
+
