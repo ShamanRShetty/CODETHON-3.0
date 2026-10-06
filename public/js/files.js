@@ -1,5 +1,5 @@
 /**
- * MoVo Files & Share Manager
+ * MoVo Files & Share Manager - Archive Register Design
  * Secure DOM manipulation: strictly utilizes textContent and standard DOM methods for user content.
  */
 
@@ -76,8 +76,8 @@ function renderFiles(files) {
       filesEmptyState.classList.remove('hidden');
       UI.renderEmptyState(
         filesEmptyState,
-        'No files uploaded yet',
-        'Upload your first file above to create secure, encrypted share links with email verification.'
+        'No Records Uploaded',
+        'Upload a file above to create encrypted, identity-verified share links.'
       );
     }
     return;
@@ -89,61 +89,46 @@ function renderFiles(files) {
 
   files.forEach((file) => {
     const tr = document.createElement('tr');
-    tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors border-b border-slate-100 dark:border-slate-800/60';
+    tr.className = 'hover:bg-[var(--bg-surface-hover)] transition-colors';
 
     // File name cell
     const tdName = document.createElement('td');
-    tdName.className = 'px-6 py-4 font-medium text-slate-900 dark:text-slate-100 flex items-center gap-3';
-
-    const iconDiv = document.createElement('div');
-    iconDiv.className =
-      'w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center shrink-0 shadow-sm';
-    iconDiv.innerHTML = `
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-      </svg>
-    `;
-
+    tdName.className = 'px-4 py-3 font-medium text-[var(--text-main)]';
     const nameSpan = document.createElement('span');
-    nameSpan.className = 'truncate max-w-xs sm:max-w-md font-semibold text-slate-800 dark:text-slate-200';
+    nameSpan.className = 'truncate max-w-xs sm:max-w-md block';
     nameSpan.textContent = file.originalName || file.name || 'Unnamed file';
-
-    tdName.appendChild(iconDiv);
     tdName.appendChild(nameSpan);
 
     // Size cell
     const tdSize = document.createElement('td');
-    tdSize.className = 'px-6 py-4 text-slate-500 dark:text-slate-400 text-xs whitespace-nowrap font-medium';
+    tdSize.className = 'px-4 py-3 text-[var(--text-muted)] font-mono text-[11px] whitespace-nowrap';
     tdSize.textContent = UI.formatBytes(file.size);
 
     // Uploaded timestamp cell
     const tdUploaded = document.createElement('td');
-    tdUploaded.className = 'px-6 py-4 text-slate-500 dark:text-slate-400 text-xs whitespace-nowrap';
+    tdUploaded.className = 'px-4 py-3 text-[var(--text-dim)] font-mono text-[11px] whitespace-nowrap';
     tdUploaded.textContent = UI.formatDate(file.uploadedAt || file.uploaded_at);
 
     // Active shares cell
     const tdShares = document.createElement('td');
-    tdShares.className = 'px-6 py-4 whitespace-nowrap';
+    tdShares.className = 'px-4 py-3 whitespace-nowrap font-mono text-[11px]';
     const shareCount = file.shareCount || 0;
     const shareBadge = document.createElement('span');
-    shareBadge.className =
-      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700';
-    shareBadge.textContent = `${shareCount} active share${shareCount === 1 ? '' : 's'}`;
+    shareBadge.className = shareCount > 0 ? 'badge-status badge-status-active' : 'badge-status badge-status-expired';
+    shareBadge.textContent = `${shareCount} active`;
     tdShares.appendChild(shareBadge);
 
     // Actions cell
     const tdActions = document.createElement('td');
-    tdActions.className = 'px-6 py-4 text-right space-x-2 whitespace-nowrap';
+    tdActions.className = 'px-4 py-3 text-right space-x-1.5 whitespace-nowrap';
 
     const btnShare = document.createElement('button');
-    btnShare.className =
-      'px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 dark:from-cyan-500/20 dark:to-indigo-500/20 text-cyan-700 dark:text-cyan-400 hover:bg-cyan-100 dark:hover:bg-cyan-500/30 border border-cyan-300 dark:border-cyan-500/30 shadow-sm transition-all';
+    btnShare.className = 'btn-ledger-primary py-1 px-2.5 text-[11px] font-mono';
     btnShare.textContent = 'Share';
     btnShare.onclick = () => openShareModal(file);
 
     const btnDelete = document.createElement('button');
-    btnDelete.className =
-      'px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/30 transition-colors';
+    btnDelete.className = 'btn-ledger-danger py-1 px-2.5 text-[11px] font-mono';
     btnDelete.textContent = 'Delete';
     btnDelete.onclick = () => confirmDeleteFile(file);
 
@@ -179,7 +164,8 @@ function initUpload() {
     dropZone.addEventListener(eventName, (e) => {
       e.preventDefault();
       e.stopPropagation();
-      dropZone.classList.add('border-cyan-500', 'bg-cyan-50/50', 'dark:bg-cyan-500/10');
+      dropZone.style.borderColor = 'var(--border-strong)';
+      dropZone.style.backgroundColor = 'var(--bg-surface-hover)';
     });
   });
 
@@ -187,7 +173,8 @@ function initUpload() {
     dropZone.addEventListener(eventName, (e) => {
       e.preventDefault();
       e.stopPropagation();
-      dropZone.classList.remove('border-cyan-500', 'bg-cyan-50/50', 'dark:bg-cyan-500/10');
+      dropZone.style.borderColor = '';
+      dropZone.style.backgroundColor = '';
     });
   });
 
@@ -205,14 +192,14 @@ async function handleFileUpload(file) {
     return;
   }
 
-  UI.showToast(`Encrypting and uploading "${file.name}"...`, 'info');
+  UI.showToast(`Encrypting "${file.name}" (AES-256-GCM)...`, 'info');
 
   const formData = new FormData();
   formData.append('file', file);
 
   try {
     await api.upload('/api/files', formData);
-    UI.showToast(`"${file.name}" uploaded and encrypted successfully!`, 'success');
+    UI.showToast(`"${file.name}" uploaded and encrypted successfully`, 'success');
     loadFiles();
   } catch (err) {
     UI.showToast(err.message || 'Upload failed', 'error');
@@ -221,14 +208,14 @@ async function handleFileUpload(file) {
 
 async function confirmDeleteFile(file) {
   const confirmed = confirm(
-    `Are you sure you want to delete "${file.originalName || 'this file'}"?\n\nThis will soft-delete the file and immediately revoke all its active shares.`
+    `Delete "${file.originalName || 'this file'}"?\n\nThis will remove the encrypted file and revoke all active share links immediately.`
   );
 
   if (!confirmed) return;
 
   try {
     await api.delete(`/api/files/${file.id}`);
-    UI.showToast('File deleted and active shares revoked', 'success');
+    UI.showToast('File deleted and shares revoked', 'success');
     loadFiles();
   } catch (err) {
     UI.showToast(err.message || 'Failed to delete file', 'error');
@@ -262,12 +249,10 @@ function initShareModal() {
   presetButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       presetButtons.forEach((b) => {
-        b.className =
-          'expiry-preset-btn py-2 px-2 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors';
+        b.className = 'expiry-preset-btn py-1.5 px-2 rounded-sm ledger-border bg-[var(--bg-surface)] text-[var(--text-muted)]';
       });
 
-      btn.className =
-        'expiry-preset-btn py-2 px-2 rounded-xl text-xs font-semibold border border-cyan-500 bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 transition-colors';
+      btn.className = 'expiry-preset-btn py-1.5 px-2 rounded-sm border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] font-semibold';
 
       const val = btn.getAttribute('data-minutes');
       if (val === 'custom') {
@@ -291,7 +276,6 @@ function initShareModal() {
     const val = (emailInput.value || '').trim().toLowerCase();
     if (!val) return;
 
-    // Simple email regex for client-side feedback
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(val)) {
       UI.showToast('Please enter a valid email address', 'error');
@@ -329,6 +313,9 @@ function initShareModal() {
     formShare.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!currentSelectedFile) return;
+
+      // Auto-add any recipient email still in the input field
+      addRecipientFromInput();
 
       const passwordVal = document.getElementById('share-password').value.trim();
       const maxDownloadsVal = parseInt(
@@ -378,11 +365,9 @@ function openShareModal(file) {
   // Reset preset button states to 1 Hour default
   presetButtons.forEach((b) => {
     if (b.getAttribute('data-minutes') === '60') {
-      b.className =
-        'expiry-preset-btn py-2 px-2 rounded-xl text-xs font-semibold border border-cyan-500 bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 transition-colors';
+      b.className = 'expiry-preset-btn py-1.5 px-2 rounded-sm border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] font-semibold';
     } else {
-      b.className =
-        'expiry-preset-btn py-2 px-2 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors';
+      b.className = 'expiry-preset-btn py-1.5 px-2 rounded-sm ledger-border bg-[var(--bg-surface)] text-[var(--text-muted)]';
     }
   });
 
@@ -400,14 +385,14 @@ function renderRecipientChips() {
   recipientEmails.forEach((email, index) => {
     const chip = document.createElement('span');
     chip.className =
-      'inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/30 shadow-sm';
+      'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-xs font-mono bg-[var(--bg-surface-subtle)] text-[var(--text-main)] border border-[var(--border-color)]';
 
     const text = document.createElement('span');
     text.textContent = email;
 
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
-    removeBtn.className = 'text-cyan-600 dark:text-cyan-400 hover:text-slate-900 dark:hover:text-white font-bold ml-1 transition-colors';
+    removeBtn.className = 'text-[var(--text-dim)] hover:text-[var(--status-revoked-text)] font-bold ml-1 transition-colors';
     removeBtn.textContent = '✕';
     removeBtn.onclick = () => {
       recipientEmails.splice(index, 1);
@@ -438,7 +423,7 @@ function initCreatedShareModal() {
       const linkInput = document.getElementById('created-share-link-input');
       if (linkInput && linkInput.value) {
         navigator.clipboard.writeText(linkInput.value).then(() => {
-          UI.showToast('Share link copied to clipboard!', 'success');
+          UI.showToast('Share link copied to clipboard', 'success');
         });
       }
     });

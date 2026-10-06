@@ -1,7 +1,7 @@
 /**
- * MoVo UI Utilities
+ * MoVo UI Utilities - Archive Ledger & Register Design System
  * Strict security: all dynamic/user content is rendered using textContent or safe DOM nodes.
- * Provides Light/Dark Theme management, Mobile Navigation, Toast system, Status Badges, and Notifications.
+ * Provides Theme management, Mobile Navigation, Toast system, Status Badges, and Notifications.
  */
 
 // Initialize Theme immediately on script execution to prevent flash
@@ -62,7 +62,7 @@ const UI = {
       const sunIcon = btn.querySelector('.theme-icon-sun');
       const moonIcon = btn.querySelector('.theme-icon-moon');
       const textLabel = btn.querySelector('.theme-toggle-text');
-      
+
       if (sunIcon && moonIcon) {
         if (isLight) {
           sunIcon.classList.add('hidden');
@@ -105,22 +105,12 @@ const UI = {
 
     const openDrawer = () => {
       mobileDrawer.classList.remove('hidden');
-      requestAnimationFrame(() => {
-        mobileDrawer.classList.remove('opacity-0', 'pointer-events-none');
-        const panel = mobileDrawer.querySelector('.mobile-drawer-panel');
-        if (panel) panel.classList.remove('-translate-x-full');
-      });
       document.body.classList.add('overflow-hidden');
     };
 
     const closeDrawer = () => {
-      const panel = mobileDrawer.querySelector('.mobile-drawer-panel');
-      if (panel) panel.classList.add('-translate-x-full');
-      mobileDrawer.classList.add('opacity-0', 'pointer-events-none');
+      mobileDrawer.classList.add('hidden');
       document.body.classList.remove('overflow-hidden');
-      setTimeout(() => {
-        mobileDrawer.classList.add('hidden');
-      }, 250);
     };
 
     mobileMenuBtn.addEventListener('click', (e) => {
@@ -148,41 +138,38 @@ const UI = {
    */
   createStatusBadge(status) {
     const badge = document.createElement('span');
-    badge.className =
-      'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border transition-colors shadow-sm';
+    badge.className = 'badge-status';
 
     const dot = document.createElement('span');
-    dot.className = 'w-1.5 h-1.5 rounded-full shrink-0';
+    dot.className = 'w-1.5 h-1.5 rounded-full inline-block shrink-0';
 
     let text = status || 'UNKNOWN';
-    let colorClasses = 'bg-slate-500/10 text-slate-400 border-slate-500/30 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
-    let dotClass = 'bg-slate-400';
 
     switch (status) {
       case 'ACTIVE':
         text = 'Active';
-        colorClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30';
-        dotClass = 'bg-emerald-500 animate-pulse';
+        badge.classList.add('badge-status-active');
+        dot.style.backgroundColor = 'currentColor';
         break;
       case 'EXPIRED':
         text = 'Expired';
-        colorClasses = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/30';
-        dotClass = 'bg-slate-400';
+        badge.classList.add('badge-status-expired');
+        dot.style.backgroundColor = 'currentColor';
         break;
       case 'REVOKED':
         text = 'Revoked';
-        colorClasses = 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30';
-        dotClass = 'bg-rose-500';
+        badge.classList.add('badge-status-revoked');
+        dot.style.backgroundColor = 'currentColor';
         break;
       case 'LIMIT_REACHED':
         text = 'Limit Reached';
-        colorClasses = 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30';
-        dotClass = 'bg-amber-500';
+        badge.classList.add('badge-status-limit');
+        dot.style.backgroundColor = 'currentColor';
         break;
+      default:
+        badge.classList.add('badge-status-expired');
+        dot.style.backgroundColor = 'currentColor';
     }
-
-    badge.className += ` ${colorClasses}`;
-    dot.className += ` ${dotClass}`;
 
     const textSpan = document.createElement('span');
     textSpan.textContent = text;
@@ -193,7 +180,7 @@ const UI = {
   },
 
   /**
-   * Format bytes into human-readable string (KB, MB, GB).
+   * Format bytes into human-readable string (B, KB, MB, GB).
    */
   formatBytes(bytes) {
     if (bytes === 0) return '0 B';
@@ -220,7 +207,7 @@ const UI = {
   },
 
   /**
-   * Format unix timestamp (ms) into relative string ("2 hours ago", "in 15 minutes").
+   * Format unix timestamp (ms) into relative string ("2h ago", "in 15m").
    */
   formatRelativeTime(unixMs) {
     if (!unixMs) return '-';
@@ -229,7 +216,7 @@ const UI = {
     const isPast = diff < 0;
     const absDiffSec = Math.floor(Math.abs(diff) / 1000);
 
-    if (absDiffSec < 60) return isPast ? 'just now' : 'in < 1 min';
+    if (absDiffSec < 60) return isPast ? 'just now' : 'in < 1m';
     const mins = Math.floor(absDiffSec / 60);
     if (mins < 60) return isPast ? `${mins}m ago` : `in ${mins}m`;
     const hours = Math.floor(mins / 60);
@@ -246,91 +233,69 @@ const UI = {
     const wrapper = document.createElement('div');
     wrapper.className = 'flex flex-col items-center justify-center py-12 px-4 text-center';
 
-    const iconBox = document.createElement('div');
-    iconBox.className =
-      'w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center text-slate-400 dark:text-slate-400 mb-3.5 shadow-sm';
-    iconBox.innerHTML = `
-      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-      </svg>
-    `;
-
     const heading = document.createElement('h3');
-    heading.className = 'text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1';
-    heading.textContent = title;
+    heading.className = 'text-xs font-mono font-semibold uppercase tracking-wider text-[var(--text-main)] mb-1';
+    heading.textContent = `— ${title} —`;
 
     const desc = document.createElement('p');
-    desc.className = 'text-xs text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed';
+    desc.className = 'text-xs text-[var(--text-muted)] max-w-sm leading-relaxed';
     desc.textContent = description;
 
-    wrapper.appendChild(iconBox);
     wrapper.appendChild(heading);
     wrapper.appendChild(desc);
     container.appendChild(wrapper);
   },
 
   /**
-   * Show a toast message with smooth entrance and auto-dismiss.
+   * Show a toast message with subtle reveal and automatic dismissal.
    */
   showToast(message, type = 'info') {
     let container = document.getElementById('toast-container');
     if (!container) {
       container = document.createElement('div');
       container.id = 'toast-container';
-      container.className = 'fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0';
+      container.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full px-4 sm:px-0';
       document.body.appendChild(container);
     }
 
     const toast = document.createElement('div');
     toast.className =
-      'pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs sm:text-sm flex items-center justify-between gap-3 transition-all duration-300 transform translate-y-3 opacity-0';
+      'px-3.5 py-2.5 rounded text-xs flex items-center justify-between gap-3 ledger-border bg-[var(--bg-surface)] text-[var(--text-main)] transition-opacity duration-150';
 
-    let iconSvg = '';
     if (type === 'success') {
-      toast.className += ' bg-emerald-50 text-emerald-900 border-emerald-300 dark:bg-emerald-950/90 dark:text-emerald-200 dark:border-emerald-800';
-      iconSvg = `<svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
+      toast.style.borderColor = 'var(--status-active-border)';
+      toast.style.backgroundColor = 'var(--status-active-bg)';
+      toast.style.color = 'var(--status-active-text)';
     } else if (type === 'error') {
-      toast.className += ' bg-rose-50 text-rose-900 border-rose-300 dark:bg-rose-950/90 dark:text-rose-200 dark:border-rose-800';
-      iconSvg = `<svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`;
-    } else {
-      toast.className += ' bg-white text-slate-800 border-slate-200 dark:bg-slate-800/90 dark:text-slate-200 dark:border-slate-700';
-      iconSvg = `<svg class="w-4 h-4 text-cyan-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
+      toast.style.borderColor = 'var(--status-revoked-border)';
+      toast.style.backgroundColor = 'var(--status-revoked-bg)';
+      toast.style.color = 'var(--status-revoked-text)';
     }
-
-    const iconSpan = document.createElement('span');
-    iconSpan.innerHTML = iconSvg;
 
     const textSpan = document.createElement('span');
     textSpan.className = 'flex-1 font-medium';
     textSpan.textContent = message;
 
     const closeBtn = document.createElement('button');
-    closeBtn.className = 'text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs ml-2 p-1 rounded transition-colors';
+    closeBtn.className = 'text-[var(--text-dim)] hover:text-[var(--text-main)] text-xs ml-2 p-1 transition-colors';
     closeBtn.textContent = '✕';
     closeBtn.onclick = () => {
-      toast.classList.add('opacity-0', 'translate-y-2');
-      setTimeout(() => toast.remove(), 250);
+      toast.remove();
     };
 
-    toast.appendChild(iconSpan);
     toast.appendChild(textSpan);
     toast.appendChild(closeBtn);
     container.appendChild(toast);
 
-    requestAnimationFrame(() => {
-      toast.classList.remove('translate-y-3', 'opacity-0');
-    });
-
     setTimeout(() => {
       if (toast.parentElement) {
-        toast.classList.add('opacity-0', 'translate-y-2');
-        setTimeout(() => toast.remove(), 250);
+        toast.remove();
       }
     }, 4500);
   },
 
   /**
-   * Initialize interactive Notification Bell with unread counter and mark-as-read.
+   * Initialize dynamic Notification Bell with unread counter and mark-as-read.
    */
   async initNotifications() {
     const btnBell = document.getElementById('btn-notifications');
@@ -382,23 +347,23 @@ const UI = {
       }
 
       if (!notifs || notifs.length === 0) {
-        list.innerHTML = `<div class="p-6 text-center text-xs text-slate-500 dark:text-slate-400">No notifications yet</div>`;
+        list.innerHTML = `<div class="p-4 text-center text-xs text-[var(--text-dim)] font-mono">No entries in notification log</div>`;
         return;
       }
 
       for (const n of notifs) {
         const item = document.createElement('div');
-        item.className = `p-3.5 border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors flex items-start justify-between gap-2.5 ${n.read === 0 ? 'bg-cyan-50/50 dark:bg-slate-800/25' : ''}`;
+        item.className = `p-3 border-b border-[var(--border-subtle)] flex items-start justify-between gap-2.5 ${n.read === 0 ? 'bg-[var(--bg-surface-subtle)]' : ''}`;
 
         const content = document.createElement('div');
-        content.className = 'flex-1 space-y-1';
+        content.className = 'flex-1 space-y-0.5';
 
         const msg = document.createElement('p');
-        msg.className = `text-xs leading-relaxed ${n.read === 0 ? 'text-slate-900 dark:text-slate-100 font-semibold' : 'text-slate-600 dark:text-slate-400'}`;
+        msg.className = `text-xs leading-relaxed ${n.read === 0 ? 'text-[var(--text-main)] font-semibold' : 'text-[var(--text-muted)]'}`;
         msg.textContent = n.message;
 
         const time = document.createElement('p');
-        time.className = 'text-[10px] text-slate-400 dark:text-slate-500 font-mono';
+        time.className = 'text-[10px] text-[var(--text-dim)] font-mono';
         time.textContent = UI.formatRelativeTime(n.created_at || n.createdAt);
 
         content.appendChild(msg);
@@ -409,13 +374,9 @@ const UI = {
           const btnRead = document.createElement('button');
           btnRead.type = 'button';
           btnRead.className =
-            'p-1 text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded transition-colors shrink-0';
+            'p-1 text-[var(--text-dim)] hover:text-[var(--text-main)] text-xs shrink-0 transition-colors font-mono';
           btnRead.title = 'Mark as read';
-          btnRead.innerHTML = `
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-          `;
+          btnRead.textContent = '✓';
 
           btnRead.addEventListener('click', async (e) => {
             e.stopPropagation();

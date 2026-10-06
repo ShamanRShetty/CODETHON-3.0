@@ -1,5 +1,5 @@
 /**
- * MoVo Public Recipient Page Script
+ * MoVo Public Recipient Page Script - Archive Register Design
  * Strict security: Generic error messages only ("This link is unavailable"), blob save, no leaks.
  */
 
@@ -9,6 +9,7 @@ let currentEmail = '';
 document.addEventListener('DOMContentLoaded', () => {
   currentToken = getShareToken();
   initFlow();
+  initOtpBoxes();
 });
 
 function getShareToken() {
@@ -18,6 +19,75 @@ function getShareToken() {
   }
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get('token') || parts[parts.length - 1] || '';
+}
+
+function initOtpBoxes() {
+  const otpInputs = document.querySelectorAll('.otp-digit');
+  const inputCodeHidden = document.getElementById('input-code');
+
+  otpInputs.forEach((input, index) => {
+    // Handle typing and auto focus next
+    input.addEventListener('input', (e) => {
+      const val = e.target.value.replace(/[^0-9]/g, '');
+      e.target.value = val ? val.slice(-1) : '';
+
+      if (e.target.value && index < otpInputs.length - 1) {
+        otpInputs[index + 1].focus();
+        otpInputs[index + 1].select();
+      }
+      syncOtpCode();
+    });
+
+    // Handle backspace
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !input.value && index > 0) {
+        otpInputs[index - 1].focus();
+        otpInputs[index - 1].value = '';
+        syncOtpCode();
+      }
+    });
+
+    // Handle Paste on any box
+    input.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+      const digits = (pasteData || '').replace(/[^0-9]/g, '').slice(0, 6);
+      if (!digits) return;
+
+      digits.split('').forEach((char, i) => {
+        if (otpInputs[i]) {
+          otpInputs[i].value = char;
+        }
+      });
+
+      const nextFocus = Math.min(digits.length, otpInputs.length - 1);
+      otpInputs[nextFocus].focus();
+      syncOtpCode();
+    });
+  });
+
+  function syncOtpCode() {
+    let fullCode = '';
+    otpInputs.forEach((i) => {
+      fullCode += i.value || '';
+    });
+    if (inputCodeHidden) {
+      inputCodeHidden.value = fullCode;
+    }
+  }
+}
+
+function getOtpValue() {
+  const otpInputs = document.querySelectorAll('.otp-digit');
+  if (otpInputs && otpInputs.length === 6) {
+    let code = '';
+    otpInputs.forEach((i) => {
+      code += i.value || '';
+    });
+    if (code.length === 6) return code;
+  }
+  const hidden = document.getElementById('input-code');
+  return hidden ? hidden.value.trim() : '';
 }
 
 function initFlow() {
@@ -31,9 +101,9 @@ function initFlow() {
   if (btnInitialContinue) {
     btnInitialContinue.addEventListener('click', async () => {
       clearMessages();
-      setButtonLoading(btnInitialContinue, true, 'Checking access...');
+      setButtonLoading(btnInitialContinue, true, 'Verifying...');
       const success = await attemptDownload();
-      setButtonLoading(btnInitialContinue, false, 'Continue');
+      setButtonLoading(btnInitialContinue, false, 'Proceed to Verification →');
       if (!success) {
         // Open share check failed -> move to email verification
         showStep('step-email');
@@ -51,7 +121,7 @@ function initFlow() {
       if (!currentEmail) return;
 
       const btn = document.getElementById('btn-request-otp');
-      setButtonLoading(btn, true, 'Sending code...');
+      setButtonLoading(btn, true, 'Dispatching Code...');
 
       try {
         await fetch(`/s/${currentToken}/otp/request`, {
@@ -61,12 +131,16 @@ function initFlow() {
         });
 
         // Always show identical info message
-        showInfo('If this email is allowed, a 6-digit verification code was sent.');
+        showInfo('If this email is on the access list, a 6-digit verification code was dispatched.');
         showStep('step-otp');
+        setTimeout(() => {
+          const firstDigit = document.querySelector('.otp-digit');
+          if (firstDigit) firstDigit.focus();
+        }, 100);
       } catch (err) {
         showError();
       } finally {
-        setButtonLoading(btn, false, 'Send Verification Code');
+        setButtonLoading(btn, false, 'Dispatch Access Code');
       }
     });
   }
@@ -75,10 +149,12 @@ function initFlow() {
     formOtp.addEventListener('submit', async (e) => {
       e.preventDefault();
       clearMessages();
-      const inputCode = document.getElementById('input-code');
-      const code = (inputCode ? inputCode.value : '').trim();
+      const code = getOtpValue();
 
-      if (!code) return;
+      if (!code || code.length < 6) {
+        showError('Please enter the full 6-digit code');
+        return;
+      }
 
       const btn = document.getElementById('btn-verify-otp');
       setButtonLoading(btn, true, 'Verifying...');
@@ -104,7 +180,7 @@ function initFlow() {
       } catch (err) {
         showError();
       } finally {
-        setButtonLoading(btn, false, 'Verify Code');
+        setButtonLoading(btn, false, 'Verify & Download');
       }
     });
   }
@@ -127,7 +203,7 @@ function initFlow() {
       setButtonLoading(btn, true, 'Decrypting...');
 
       const success = await attemptDownload(password);
-      setButtonLoading(btn, false, 'Download File');
+      setButtonLoading(btn, false, 'Decrypt & Download');
 
       if (!success) {
         showError();
@@ -207,6 +283,28 @@ function showStep(stepId) {
       }
     }
   }
+
+  // Update 3-step progress strip
+  const s1 = document.getElementById('progress-step-1');
+  const s2 = document.getElementById('progress-step-2');
+  const s3 = document.getElementById('progress-step-3');
+
+  if (s1 && s2 && s3) {
+    s1.className = 'progress-strip-step';
+    s2.className = 'progress-strip-step';
+    s3.className = 'progress-strip-step';
+
+    if (stepId === 'step-initial' || stepId === 'step-email') {
+      s1.classList.add('active');
+    } else if (stepId === 'step-otp') {
+      s1.classList.add('completed');
+      s2.classList.add('active');
+    } else if (stepId === 'step-password' || stepId === 'step-success') {
+      s1.classList.add('completed');
+      s2.classList.add('completed');
+      s3.classList.add(stepId === 'step-success' ? 'completed' : 'active');
+    }
+  }
 }
 
 function showError(msg = 'This link is unavailable') {
@@ -238,10 +336,8 @@ function setButtonLoading(btn, isLoading, defaultText) {
   if (!btn) return;
   btn.disabled = isLoading;
   if (isLoading) {
-    btn.textContent = defaultText || 'Loading...';
-    btn.classList.add('opacity-75', 'cursor-not-allowed');
+    btn.textContent = defaultText || 'Processing...';
   } else {
     btn.textContent = defaultText;
-    btn.classList.remove('opacity-75', 'cursor-not-allowed');
   }
 }

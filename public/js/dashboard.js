@@ -1,5 +1,5 @@
 /**
- * MoVo Dashboard Script
+ * MoVo Dashboard Script - Archive Register Design
  * Safe DOM rendering: strictly utilizes textContent for all user/dynamic fields.
  */
 
@@ -73,6 +73,29 @@ function renderMetrics(data) {
   if (elExpired) elExpired.textContent = expiredCount.toLocaleString();
   if (elRevoked) elRevoked.textContent = revokedCount.toLocaleString();
   if (elLimit) elLimit.textContent = limitCount.toLocaleString();
+
+  // Pure CSS Status Bar Segments
+  const segActive = document.getElementById('bar-segment-active');
+  const segExpired = document.getElementById('bar-segment-expired');
+  const segRevoked = document.getElementById('bar-segment-revoked');
+  const segLimit = document.getElementById('bar-segment-limit');
+
+  if (totalShares > 0) {
+    const pActive = (activeCount / totalShares) * 100;
+    const pExpired = (expiredCount / totalShares) * 100;
+    const pRevoked = (revokedCount / totalShares) * 100;
+    const pLimit = (limitCount / totalShares) * 100;
+
+    if (segActive) segActive.style.width = `${pActive}%`;
+    if (segExpired) segExpired.style.width = `${pExpired}%`;
+    if (segRevoked) segRevoked.style.width = `${pRevoked}%`;
+    if (segLimit) segLimit.style.width = `${pLimit}%`;
+  } else {
+    if (segActive) segActive.style.width = '0%';
+    if (segExpired) segExpired.style.width = '0%';
+    if (segRevoked) segRevoked.style.width = '0%';
+    if (segLimit) segLimit.style.width = '0%';
+  }
 }
 
 function renderRecentActivity(activities) {
@@ -88,8 +111,8 @@ function renderRecentActivity(activities) {
     emptyState.classList.remove('hidden');
     UI.renderEmptyState(
       emptyState,
-      'No Recent Activity',
-      'Access attempts and file downloads across your shares will appear here.'
+      'No Recent Activity Recorded',
+      'Access attempts and file downloads across your shares will appear in this ledger.'
     );
     return;
   }
@@ -100,7 +123,7 @@ function renderRecentActivity(activities) {
   for (const act of activities) {
     const isSuccess = act.success === 1;
     const tr = document.createElement('tr');
-    tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-colors group';
+    tr.className = 'hover:bg-[var(--bg-surface-hover)] transition-colors';
 
     tr.addEventListener('click', () => {
       if (act.shareId) {
@@ -110,32 +133,30 @@ function renderRecentActivity(activities) {
 
     // 1. File Name
     const tdFile = document.createElement('td');
-    tdFile.className = 'px-6 py-3.5 whitespace-nowrap font-semibold text-slate-900 dark:text-slate-200 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors';
+    tdFile.className = 'px-4 py-3 whitespace-nowrap font-medium text-[var(--text-main)]';
     tdFile.textContent = act.fileName || 'Untitled File';
 
     // 2. Reason / Result Badge
     const tdResult = document.createElement('td');
-    tdResult.className = 'px-6 py-3.5 whitespace-nowrap';
+    tdResult.className = 'px-4 py-3 whitespace-nowrap font-mono text-xs';
     const badge = document.createElement('span');
-    badge.className = isSuccess
-      ? 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30'
-      : 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30';
+    badge.className = `badge-status ${isSuccess ? 'badge-status-active' : 'badge-status-revoked'}`;
     badge.textContent = act.reason || (isSuccess ? 'OK' : 'BLOCKED');
     tdResult.appendChild(badge);
 
     // 3. Recipient Email
     const tdEmail = document.createElement('td');
-    tdEmail.className = 'px-6 py-3.5 whitespace-nowrap text-slate-700 dark:text-slate-300 font-medium';
+    tdEmail.className = 'px-4 py-3 whitespace-nowrap font-mono text-[11px] text-[var(--text-muted)]';
     tdEmail.textContent = act.userEmail || (isSuccess ? 'Public Visitor' : 'Unspecified');
 
     // 4. IP Address
     const tdIp = document.createElement('td');
-    tdIp.className = 'px-6 py-3.5 whitespace-nowrap font-mono text-slate-500 dark:text-slate-400';
+    tdIp.className = 'px-4 py-3 whitespace-nowrap font-mono text-[11px] text-[var(--text-dim)]';
     tdIp.textContent = act.ip || '-';
 
     // 5. Timestamp
     const tdTime = document.createElement('td');
-    tdTime.className = 'px-6 py-3.5 whitespace-nowrap text-right text-slate-500 dark:text-slate-400 font-mono text-[11px]';
+    tdTime.className = 'px-4 py-3 whitespace-nowrap text-right font-mono text-[11px] text-[var(--text-dim)]';
     tdTime.textContent = `${UI.formatDate(act.at)} (${UI.formatRelativeTime(act.at)})`;
 
     tr.appendChild(tdFile);

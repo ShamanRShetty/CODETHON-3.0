@@ -1,5 +1,5 @@
 /**
- * MoVo Share History Manager
+ * MoVo Share History Script - Archive Register Design
  * Safe DOM rendering: strictly uses textContent and safe DOM elements for all user data.
  */
 
@@ -102,7 +102,6 @@ async function loadShares() {
 
   const toVal = document.getElementById('filter-to')?.value;
   if (toVal) {
-    // End of selected day
     const toMs = new Date(toVal).getTime() + 24 * 60 * 60 * 1000 - 1;
     if (!isNaN(toMs)) params.set('to', toMs);
   }
@@ -129,8 +128,8 @@ function renderShares(shares) {
     emptyState.classList.remove('hidden');
     UI.renderEmptyState(
       emptyState,
-      'No Share Links Found',
-      'No share links match your filter criteria or you have not created any shares yet.'
+      'No Records Found',
+      'No share links match the active filters or no shares have been issued.'
     );
     return;
   }
@@ -140,95 +139,76 @@ function renderShares(shares) {
 
   for (const share of shares) {
     const tr = document.createElement('tr');
-    tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-colors group';
+    tr.className = 'hover:bg-[var(--bg-surface-hover)] transition-colors';
 
-    // Clicking anywhere on row opens timeline
+    // Row click opens timeline
     tr.addEventListener('click', (e) => {
-      // Don't trigger if clicked on a button or action element
       if (e.target.closest('button') || e.target.closest('a')) return;
       window.location.href = `/timeline.html?share=${share.id}`;
     });
 
     // 1. File Name
     const tdName = document.createElement('td');
-    tdName.className = 'px-6 py-4 whitespace-nowrap';
-    const nameWrapper = document.createElement('div');
-    nameWrapper.className = 'flex items-center gap-3';
-    nameWrapper.innerHTML = `
-      <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-sm">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-      </div>
-    `;
+    tdName.className = 'px-4 py-3 whitespace-nowrap font-medium text-[var(--text-main)]';
     const nameText = document.createElement('span');
-    nameText.className = 'font-semibold text-slate-900 dark:text-slate-100 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors';
+    nameText.className = 'hover:underline underline-offset-2';
     nameText.textContent = share.fileName || 'Untitled File';
-    nameWrapper.appendChild(nameText);
-    tdName.appendChild(nameWrapper);
+    tdName.appendChild(nameText);
 
     // 2. Status Badge
     const tdStatus = document.createElement('td');
-    tdStatus.className = 'px-6 py-4 whitespace-nowrap';
+    tdStatus.className = 'px-4 py-3 whitespace-nowrap';
     tdStatus.appendChild(UI.createStatusBadge(share.status));
 
     // 3. Recipients
     const tdRecipients = document.createElement('td');
-    tdRecipients.className = 'px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-300';
+    tdRecipients.className = 'px-4 py-3 whitespace-nowrap text-[var(--text-muted)] font-mono text-[11px]';
     if (share.recipients && share.recipients.length > 0) {
       const recSpan = document.createElement('span');
-      recSpan.className = 'inline-flex items-center gap-1 font-medium';
       recSpan.textContent =
         share.recipients.length === 1
           ? share.recipients[0]
-          : `${share.recipients[0]} +${share.recipients.length - 1} more`;
+          : `${share.recipients[0]} (+${share.recipients.length - 1})`;
       recSpan.title = share.recipients.join(', ');
       tdRecipients.appendChild(recSpan);
     } else {
       const openSpan = document.createElement('span');
-      openSpan.className = 'text-slate-400 dark:text-slate-500 italic';
-      openSpan.textContent = 'Open (Anyone with link)';
+      openSpan.className = 'text-[var(--text-dim)] italic';
+      openSpan.textContent = 'Open link';
       tdRecipients.appendChild(openSpan);
     }
 
     // 4. Downloads
     const tdDownloads = document.createElement('td');
-    tdDownloads.className = 'px-6 py-4 whitespace-nowrap text-slate-700 dark:text-slate-300 font-mono font-medium';
+    tdDownloads.className = 'px-4 py-3 whitespace-nowrap font-mono text-[11px] text-[var(--text-main)]';
     tdDownloads.textContent = `${share.downloadCount} / ${share.maxDownloads !== null && share.maxDownloads !== undefined ? share.maxDownloads : '∞'}`;
 
     // 5. Expiry
     const tdExpires = document.createElement('td');
-    tdExpires.className = 'px-6 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400';
+    tdExpires.className = 'px-4 py-3 whitespace-nowrap font-mono text-[11px] text-[var(--text-muted)]';
     tdExpires.textContent = UI.formatDate(share.expiresAt);
 
     // 6. Created
     const tdCreated = document.createElement('td');
-    tdCreated.className = 'px-6 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400';
+    tdCreated.className = 'px-4 py-3 whitespace-nowrap font-mono text-[11px] text-[var(--text-dim)]';
     tdCreated.textContent = UI.formatDate(share.createdAt);
 
     // 7. Actions
     const tdActions = document.createElement('td');
-    tdActions.className = 'px-6 py-4 whitespace-nowrap text-right space-x-2';
+    tdActions.className = 'px-4 py-3 whitespace-nowrap text-right space-x-1.5';
 
     // Timeline button
     const btnTimeline = document.createElement('a');
     btnTimeline.href = `/timeline.html?share=${share.id}`;
-    btnTimeline.className =
-      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-colors shadow-sm';
-    btnTimeline.innerHTML = `
-      <svg class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-      Timeline
-    `;
+    btnTimeline.className = 'btn-ledger-secondary py-1 px-2 text-[11px] font-mono';
+    btnTimeline.textContent = 'Timeline';
     tdActions.appendChild(btnTimeline);
 
     // Revoke button
     if (share.status !== 'REVOKED') {
       const btnRevoke = document.createElement('button');
       btnRevoke.type = 'button';
-      btnRevoke.className =
-        'inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-semibold border border-rose-200 dark:border-rose-500/30 transition-colors';
+      btnRevoke.className = 'btn-ledger-danger py-1 px-2 text-[11px] font-mono';
       btnRevoke.textContent = 'Revoke';
       btnRevoke.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -276,7 +256,7 @@ function initRevokeModal() {
         UI.showToast(err.message || 'Failed to revoke share', 'error');
       } finally {
         btnConfirm.disabled = false;
-        btnConfirm.textContent = 'Yes, Revoke Link';
+        btnConfirm.textContent = 'Confirm Revocation';
       }
     });
   }

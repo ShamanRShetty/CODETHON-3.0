@@ -23,94 +23,93 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
+            sans: ['Geist', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['Geist Mono', 'SF Mono', 'monospace'],
+            serif: ['Instrument Serif', 'Georgia', 'serif'],
           }
         }
       }
     }
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/theme.css">
 </head>
-<body class="min-h-full flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-slate-900 dark:via-slate-950 dark:to-black text-slate-900 dark:text-slate-100 transition-colors duration-200">
+<body class="min-h-full flex flex-col justify-between p-4 sm:p-8 bg-[var(--bg-app)] text-[var(--text-main)]">
   
-  <!-- Top Right Theme Toggle -->
-  <div class="fixed top-4 right-4 z-50">
-    <button type="button" class="theme-toggle-btn p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500" title="Toggle Theme" aria-label="Toggle Theme">
-      <svg class="theme-icon-sun w-4 h-4 hidden dark:block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-      </svg>
-      <svg class="theme-icon-moon w-4 h-4 block dark:hidden text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.03 9.03 0 008.354-5.646z"/>
-      </svg>
-    </button>
-  </div>
-
-  <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
-    <!-- Brand Icon -->
-    <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white p-2 shadow-xl border border-slate-200 dark:border-slate-800 mb-4 animate-subtle-pulse">
-      <img src="/MoVo.jpeg" alt="MoVo Official Logo" class="w-full h-full object-contain" />
+  <!-- Header & Brand -->
+  <header class="w-full max-w-lg mx-auto flex items-center justify-between pb-6 ledger-border-b">
+    <div class="flex items-center gap-3">
+      <img src="/MoVo.jpeg" alt="MoVo Logo" class="w-8 h-8 object-contain logo-ink" />
+      <div>
+        <div class="text-sm font-bold tracking-tight font-serif text-lg leading-none">MoVo Archive</div>
+        <div class="text-[10px] font-mono text-[var(--text-dim)] uppercase tracking-wider">Access Register</div>
+      </div>
     </div>
-    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Secure File Download</h1>
-    <p class="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">MoVo &bull; Encrypted at rest &bull; Verified access audit</p>
-  </div>
 
-  <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-2 sm:px-0">
-    <div class="bg-white/90 dark:bg-slate-900/80 backdrop-blur-xl py-8 px-5 sm:px-10 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 rounded-2xl transition-all">
-      
-      <!-- Global Generic Error Banner -->
-      <div id="error-banner" class="hidden mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-3">
-        <svg class="w-5 h-5 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-        </svg>
-        <span id="error-banner-text">This link is unavailable</span>
-      </div>
+    <!-- Theme Toggle -->
+    <button type="button" class="theme-toggle-btn px-2.5 py-1 text-xs font-mono ledger-surface text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors" title="Toggle Theme" aria-label="Toggle Theme">
+      <span class="theme-toggle-text">Theme</span>
+    </button>
+  </header>
 
-      <!-- Info Alert Banner -->
-      <div id="info-banner" class="hidden mb-6 p-4 rounded-xl bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/30 text-cyan-800 dark:text-cyan-300 text-xs font-semibold flex items-center gap-3">
-        <svg class="w-5 h-5 text-cyan-600 dark:text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        <span id="info-banner-text"></span>
-      </div>
+  <!-- Main Card Container -->
+  <main class="w-full max-w-lg mx-auto my-6 space-y-5">
+
+    <!-- Progress Strip (3 Steps) -->
+    <div id="recipient-progress-strip" class="progress-strip">
+      <div id="progress-step-1" class="progress-strip-step active">1. Identity</div>
+      <div id="progress-step-2" class="progress-strip-step">2. Code</div>
+      <div id="progress-step-3" class="progress-strip-step">3. Download</div>
+    </div>
+
+    <!-- Generic Error Banner -->
+    <div id="error-banner" class="hidden p-3 rounded ledger-border bg-[var(--status-revoked-bg)] border-[var(--status-revoked-border)] text-[var(--status-revoked-text)] text-xs font-mono flex items-center justify-between">
+      <span id="error-banner-text">This link is unavailable</span>
+      <span class="text-[10px] opacity-75">404</span>
+    </div>
+
+    <!-- Info Banner -->
+    <div id="info-banner" class="hidden p-3 rounded ledger-border bg-[var(--bg-surface-subtle)] text-[var(--text-main)] text-xs font-mono">
+      <span id="info-banner-text"></span>
+    </div>
+
+    <!-- Form & Step Container -->
+    <div class="ledger-surface p-6 sm:p-8 space-y-6">
 
       <!-- STEP 0: Initial Continue Screen -->
-      <div id="step-initial" class="space-y-6">
-        <div class="text-center py-3">
-          <div class="w-14 h-14 rounded-2xl bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mx-auto mb-4 shadow-sm">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-            </svg>
-          </div>
-          <h2 class="text-base font-bold text-slate-900 dark:text-white">Access Shared File</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">Click continue to verify recipient access and securely download the encrypted file.</p>
+      <div id="step-initial" class="space-y-5">
+        <div>
+          <div class="text-[11px] font-mono uppercase tracking-widest text-[var(--text-dim)] mb-1">Encrypted Record Access</div>
+          <h1 class="text-2xl font-serif text-[var(--text-main)]">Incoming Secure Dispatch</h1>
+          <p class="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed">
+            This file is encrypted at rest (AES-256-GCM). Every access attempt is recorded in the audit log.
+          </p>
         </div>
 
-        <button type="button" id="btn-initial-continue" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-sm font-semibold shadow-lg shadow-cyan-500/20 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all flex items-center justify-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-          </svg>
-          Continue
-        </button>
+        <div class="pt-2">
+          <button type="button" id="btn-initial-continue" class="btn-ledger-primary w-full py-2.5 text-xs font-mono uppercase tracking-wider">
+            Proceed to Verification &rarr;
+          </button>
+        </div>
       </div>
 
       <!-- STEP 1: Email / Request OTP -->
       <div id="step-email" class="hidden space-y-5">
         <div>
-          <h2 class="text-base font-bold text-slate-900 dark:text-white">Recipient Verification</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">This share is restricted. Enter your email to receive an OTP code.</p>
+          <div class="text-[11px] font-mono uppercase tracking-widest text-[var(--text-dim)] mb-1">Step 1 of 3</div>
+          <h2 class="text-xl font-serif text-[var(--text-main)]">Recipient Verification</h2>
+          <p class="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed">
+            Enter your email to verify identity. If you are on the access list, a one-time code will be dispatched.
+          </p>
         </div>
 
         <form id="form-email" class="space-y-4">
           <div>
-            <label for="input-email" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Email Address</label>
-            <input type="email" id="input-email" required class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/70 border border-slate-300 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all" placeholder="you@example.com" />
+            <label for="input-email" class="block text-xs font-mono uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Email Address</label>
+            <input type="email" id="input-email" required class="ledger-input font-mono text-xs" placeholder="recipient@domain.com" />
           </div>
 
-          <button type="submit" id="btn-request-otp" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-sm font-semibold shadow-lg shadow-cyan-500/20 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all flex items-center justify-center gap-2">
-            Send Verification Code
+          <button type="submit" id="btn-request-otp" class="btn-ledger-primary w-full py-2.5 text-xs font-mono uppercase tracking-wider">
+            Dispatch Access Code
           </button>
         </form>
       </div>
@@ -118,23 +117,36 @@
       <!-- STEP 2: 6-Digit Code / Verify OTP -->
       <div id="step-otp" class="hidden space-y-5">
         <div>
-          <h2 class="text-base font-bold text-slate-900 dark:text-white">Enter Verification Code</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter the 6-digit code sent to your email address.</p>
+          <div class="text-[11px] font-mono uppercase tracking-widest text-[var(--text-dim)] mb-1">Step 2 of 3</div>
+          <h2 class="text-xl font-serif text-[var(--text-main)]">Enter Access Code</h2>
+          <p class="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed">
+            Enter the 6-digit verification code sent to your email.
+          </p>
         </div>
 
-        <form id="form-otp" class="space-y-4">
+        <form id="form-otp" class="space-y-5">
           <div>
-            <label for="input-code" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">6-Digit Code</label>
-            <input type="text" id="input-code" required maxlength="6" pattern="[0-9]{6}" class="w-full text-center tracking-widest text-xl font-mono font-bold px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/70 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all" placeholder="123456" />
+            <label class="block text-xs font-mono uppercase tracking-wider text-[var(--text-muted)] mb-2 text-center">6-Digit One-Time Code</label>
+            <!-- 6 Separate Digit Boxes -->
+            <div class="otp-container">
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="0" />
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="1" />
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="2" />
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="3" />
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="4" />
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit" data-index="5" />
+            </div>
+            <!-- Hidden canonical input for fallback -->
+            <input type="hidden" id="input-code" />
           </div>
 
-          <button type="submit" id="btn-verify-otp" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-sm font-semibold shadow-lg shadow-cyan-500/20 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all flex items-center justify-center gap-2">
-            Verify Code
+          <button type="submit" id="btn-verify-otp" class="btn-ledger-primary w-full py-2.5 text-xs font-mono uppercase tracking-wider">
+            Verify & Download
           </button>
 
-          <div class="text-center pt-2">
-            <button type="button" id="btn-resend-otp" class="text-xs font-semibold text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
-              Resend code or change email
+          <div class="text-center pt-1">
+            <button type="button" id="btn-resend-otp" class="text-xs font-mono text-[var(--text-dim)] hover:text-[var(--text-main)] underline underline-offset-4 transition-colors">
+              Re-enter email or resend code
             </button>
           </div>
         </form>
@@ -143,43 +155,51 @@
       <!-- STEP 3: Password Required Screen -->
       <div id="step-password" class="hidden space-y-5">
         <div>
-          <h2 class="text-base font-bold text-slate-900 dark:text-white">Password Protected</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Please enter the password provided by the sender.</p>
+          <div class="text-[11px] font-mono uppercase tracking-widest text-[var(--text-dim)] mb-1">Passcode Required</div>
+          <h2 class="text-xl font-serif text-[var(--text-main)]">Enter Share Password</h2>
+          <p class="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed">
+            This share requires a secondary password assigned by the sender.
+          </p>
         </div>
 
         <form id="form-password" class="space-y-4">
           <div>
-            <label for="input-password" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Share Password</label>
-            <input type="password" id="input-password" required class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/70 border border-slate-300 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all" placeholder="Enter share password" />
+            <label for="input-password" class="block text-xs font-mono uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Share Password</label>
+            <input type="password" id="input-password" required class="ledger-input font-mono text-xs" placeholder="••••••••" />
           </div>
 
-          <button type="submit" id="btn-submit-password" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-sm font-semibold shadow-lg shadow-cyan-500/20 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-            </svg>
-            Download File
+          <button type="submit" id="btn-submit-password" class="btn-ledger-primary w-full py-2.5 text-xs font-mono uppercase tracking-wider">
+            Decrypt & Download
           </button>
         </form>
       </div>
 
       <!-- STEP 4: Success Screen -->
       <div id="step-success" class="hidden text-center py-4 space-y-4">
-        <div class="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-sm">
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-          </svg>
+        <div class="text-[11px] font-mono uppercase tracking-widest text-[var(--status-active-text)]">
+          [ 200 OK — Decryption Complete ]
         </div>
-        <div>
-          <h2 class="text-lg font-bold text-slate-900 dark:text-white">Download Complete</h2>
-          <p id="success-filename" class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Your file was securely decrypted and downloaded.</p>
+        <h2 class="text-2xl font-serif text-[var(--text-main)]">File Downloaded</h2>
+        <p id="success-filename" class="text-xs font-mono text-[var(--text-muted)]">File downloaded to device.</p>
+        <div class="pt-3">
+          <button type="button" id="btn-download-again" class="btn-ledger-secondary text-xs font-mono">
+            Download Again
+          </button>
         </div>
-        <button type="button" id="btn-download-again" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-300 dark:border-slate-700 transition-colors shadow-sm">
-          Download Again
-        </button>
       </div>
 
     </div>
-  </div>
+
+    <!-- Security Notice Footer -->
+    <div class="text-center text-[10px] font-mono text-[var(--text-dim)] leading-relaxed">
+      MoVo Secure Access &bull; Every attempt is recorded.
+    </div>
+
+  </main>
+
+  <footer class="w-full max-w-lg mx-auto pt-6 text-center text-[10px] font-mono text-[var(--text-dim)] ledger-border-t">
+    AES-256-GCM authenticated &bull; Ephemeral OTP verification
+  </footer>
 
   <script src="/js/api.js"></script>
   <script src="/js/ui.js"></script>
