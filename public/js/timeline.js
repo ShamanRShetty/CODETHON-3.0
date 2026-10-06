@@ -1,5 +1,5 @@
 /**
- * VaultLink Access Timeline Script
+ * MoVo Access Timeline Script
  * Safe DOM rendering: strictly uses textContent for all user-provided data (email, reason, ip, filename).
  */
 

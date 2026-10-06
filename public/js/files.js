@@ -1,5 +1,5 @@
 /**
- * VaultLink Files & Share Manager
+ * MoVo Files & Share Manager
  * Secure DOM manipulation: strictly utilizes textContent and standard DOM methods for user content.
  */
 

@@ -1,5 +1,5 @@
 /**
- * VaultLink Share History Manager
+ * MoVo Share History Manager
  * Safe DOM rendering: strictly uses textContent and safe DOM elements for all user data.
  */
 

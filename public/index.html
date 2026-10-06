@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VaultLink - Secure File Sharing</title>
+  <title>MoVo - Secure File Sharing</title>
   <script>
     // Theme immediate sync before render
     (function () {
-      const saved = localStorage.getItem('vaultlink_theme') || 'dark';
+      const saved = localStorage.getItem('movo_theme') || localStorage.getItem('vaultlink_theme') || 'dark';
       if (saved === 'light') {
         document.documentElement.classList.add('light');
         document.documentElement.classList.remove('dark');
@@ -50,15 +50,11 @@
   </div>
 
   <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
-    <!-- Brand Logo / Badge -->
-    <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-indigo-600 p-0.5 shadow-xl shadow-cyan-500/20 mb-4 animate-subtle-pulse">
-      <div class="w-full h-full bg-white dark:bg-slate-950 rounded-[14px] flex items-center justify-center transition-colors">
-        <svg class="w-7 h-7 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-        </svg>
-      </div>
+    <!-- Brand Logo -->
+    <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white p-2 shadow-xl border border-slate-200 dark:border-slate-800 mb-4 animate-subtle-pulse">
+      <img src="/MoVo.jpeg" alt="MoVo Official Logo" class="w-full h-full object-contain" />
     </div>
-    <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">VaultLink</h1>
+    <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">MoVo</h1>
     <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 font-medium">Share with a person, not just a link.</p>
   </div>
 

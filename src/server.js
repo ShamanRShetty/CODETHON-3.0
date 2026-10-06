@@ -52,7 +52,7 @@ app.use((err, req, res, next) => {
 
 if (require.main === module) {
   app.listen(config.PORT, () => {
-    console.log(`VaultLink server listening on port ${config.PORT} (${config.BASE_URL})`);
+    console.log(`MoVo server listening on port ${config.PORT} (${config.BASE_URL})`);
   });
 }
 

@@ -1,12 +1,12 @@
 /**
- * VaultLink UI Utilities
+ * MoVo UI Utilities
  * Strict security: all dynamic/user content is rendered using textContent or safe DOM nodes.
  * Provides Light/Dark Theme management, Mobile Navigation, Toast system, Status Badges, and Notifications.
  */
 
 // Initialize Theme immediately on script execution to prevent flash
 (function () {
-  const savedTheme = localStorage.getItem('vaultlink_theme') || 'dark';
+  const savedTheme = localStorage.getItem('movo_theme') || localStorage.getItem('vaultlink_theme') || 'dark';
   if (savedTheme === 'light') {
     document.documentElement.classList.add('light');
     document.documentElement.classList.remove('dark');
@@ -32,11 +32,11 @@ const UI = {
     if (theme === 'light') {
       document.documentElement.classList.add('light');
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('vaultlink_theme', 'light');
+      localStorage.setItem('movo_theme', 'light');
     } else {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
-      localStorage.setItem('vaultlink_theme', 'dark');
+      localStorage.setItem('movo_theme', 'dark');
     }
     this.updateThemeToggleIcons();
   },

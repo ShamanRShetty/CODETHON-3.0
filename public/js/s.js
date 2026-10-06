@@ -1,5 +1,5 @@
 /**
- * VaultLink Public Recipient Page Script
+ * MoVo Public Recipient Page Script
  * Strict security: Generic error messages only ("This link is unavailable"), blob save, no leaks.
  */
 

@@ -1,10 +1,10 @@
-# VaultLink
+# MoVo
 
 > Secure, Expiring, and Revocable File Sharing with Email OTP Authentication and Envelope Encryption at Rest.
 
-VaultLink is a secure file-sharing web application designed for sharing sensitive files with specific recipients. Recipients authenticate their identity using email-based one-time passcodes (OTP). Uploaded files are envelope-encrypted at rest with AES-256-GCM. Every access attempt—whether authorized, expired, revoked, or blocked—is recorded in an immutable audit timeline.
+MoVo is a secure file-sharing web application designed for sharing sensitive files with specific recipients. Recipients authenticate their identity using email-based one-time passcodes (OTP). Uploaded files are envelope-encrypted at rest with AES-256-GCM. Every access attempt—whether authorized, expired, revoked, or blocked—is recorded in an immutable audit timeline.
 
-> **Security & Cryptography Notice:** VaultLink uses **envelope encryption at rest** (files are encrypted on the server before writing to disk with AES-256-GCM and unique per-file keys wrapped under a master key). VaultLink is **not** an end-to-end encrypted (E2EE) client application; files are decrypted on the server upon authenticated, authorized download and streamed directly to the recipient.
+> **Security & Cryptography Notice:** MoVo uses **envelope encryption at rest** (files are encrypted on the server before writing to disk with AES-256-GCM and unique per-file keys wrapped under a master key). MoVo is **not** an end-to-end encrypted (E2EE) client application; files are decrypted on the server upon authenticated, authorized download and streamed directly to the recipient.
 
 ---
 
@@ -130,7 +130,7 @@ Express REST API (Helmet, Rate Limits, Cookie Parser, Zod)
    - In Alice's account, inspect the timeline to see the blocked access attempt in real time.
 3. **Authorized Recipient Download:**
    - On the share page, enter `bob@example.com` and request an OTP.
-   - Read the 6-digit OTP code printed in the server console (`[VaultLink Mailer - Console Mode]`).
+   - Read the 6-digit OTP code printed in the server console (`[MoVo Mailer - Console Mode]`).
    - Enter the OTP code, verify, and click "Download". The decrypted file downloads immediately.
 4. **Download Limit Enforcement:**
    - Re-attempt the download on the same link.

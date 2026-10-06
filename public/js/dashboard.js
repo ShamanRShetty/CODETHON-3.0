@@ -1,5 +1,5 @@
 /**
- * VaultLink Dashboard Script
+ * MoVo Dashboard Script
  * Safe DOM rendering: strictly utilizes textContent for all user/dynamic fields.
  */
 

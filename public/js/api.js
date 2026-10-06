@@ -1,5 +1,5 @@
 /**
- * VaultLink API Client
+ * MoVo API Client
  * Standardized fetch wrapper with automatic JSON handling and 401 redirection.
  * Communicates directly with live Express API endpoints (Mock mode disabled).
  */
