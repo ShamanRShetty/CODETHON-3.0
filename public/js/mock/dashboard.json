@@ -1,0 +1,32 @@
+{
+  "storageBytes": 4825088,
+  "fileCount": 3,
+  "sharesByStatus": {
+    "ACTIVE": 1,
+    "EXPIRED": 1,
+    "REVOKED": 1,
+    "LIMIT_REACHED": 1
+  },
+  "recentActivity": [
+    {
+      "id": 1,
+      "shareId": 1,
+      "fileName": "Quarterly_Financial_Report.pdf",
+      "userEmail": "investor@example.com",
+      "ip": "192.168.1.10",
+      "success": 1,
+      "reason": "OK",
+      "at": 1717205000000
+    },
+    {
+      "id": 2,
+      "shareId": 3,
+      "fileName": "Quarterly_Financial_Report.pdf",
+      "userEmail": "unauthorized@external.com",
+      "ip": "203.0.113.42",
+      "success": 0,
+      "reason": "REVOKED",
+      "at": 1717206000000
+    }
+  ]
+}

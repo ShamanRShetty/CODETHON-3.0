@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "originalName": "Quarterly_Financial_Report.pdf",
+    "size": 2457600,
+    "mime": "application/pdf",
+    "shareCount": 2,
+    "uploadedAt": 1717200000000
+  },
+  {
+    "id": 2,
+    "originalName": "Passport_Scan_Confidential.png",
+    "size": 1843200,
+    "mime": "image/png",
+    "shareCount": 1,
+    "uploadedAt": 1717203600000
+  },
+  {
+    "id": 3,
+    "originalName": "Employee_Offer_Letter.pdf",
+    "size": 524288,
+    "mime": "application/pdf",
+    "shareCount": 0,
+    "uploadedAt": 1717207200000
+  }
+]

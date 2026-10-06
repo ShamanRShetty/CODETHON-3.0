@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "fileName": "Quarterly_Financial_Report.pdf",
+    "status": "ACTIVE",
+    "recipients": ["investor@example.com", "auditor@example.com"],
+    "expiresAt": 1717286400000,
+    "downloadCount": 1,
+    "maxDownloads": 5,
+    "createdAt": 1717200000000
+  },
+  {
+    "id": 2,
+    "fileName": "Passport_Scan_Confidential.png",
+    "status": "EXPIRED",
+    "recipients": ["hr@example.com"],
+    "expiresAt": 1717190000000,
+    "downloadCount": 1,
+    "maxDownloads": 1,
+    "createdAt": 1717180000000
+  },
+  {
+    "id": 3,
+    "fileName": "Quarterly_Financial_Report.pdf",
+    "status": "REVOKED",
+    "recipients": ["external-leak@example.com"],
+    "expiresAt": 1717300000000,
+    "downloadCount": 0,
+    "maxDownloads": null,
+    "createdAt": 1717201000000
+  },
+  {
+    "id": 4,
+    "fileName": "Project_Specs_V1.pdf",
+    "status": "LIMIT_REACHED",
+    "recipients": ["contractor@example.com"],
+    "expiresAt": 1717300000000,
+    "downloadCount": 3,
+    "maxDownloads": 3,
+    "createdAt": 1717202000000
+  }
+]
