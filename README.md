@@ -19,7 +19,7 @@ MoVo is a secure file-sharing web application designed for sharing sensitive fil
 1. **Clone and install dependencies:**
    ```bash
    git clone <repo-url>
-   cd CODETHON-3.0
+   cd MoVo
    npm install
    ```
 
