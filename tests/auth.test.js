@@ -199,4 +199,39 @@ describe('Auth Routes (src/routes/auth.js & src/middleware/auth.js)', () => {
     assert.ok(setCookie);
     assert.match(setCookie, /session=;/);
   });
+
+  test('attack test: stolen/saved JWT token is rejected with 401 after user logs out', async () => {
+    // 1. Log in to obtain a valid JWT session token
+    const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'alice.smith@example.com',
+        password: 'Password123!',
+      }),
+    });
+    const setCookie = loginRes.headers.get('set-cookie');
+    const cookieValue = setCookie.split(';')[0];
+
+    // 2. Verify token works initially
+    const beforeLogoutRes = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { Cookie: cookieValue },
+    });
+    assert.strictEqual(beforeLogoutRes.status, 200);
+
+    // 3. Perform logout with that cookie
+    const logoutRes = await fetch(`${baseUrl}/api/auth/logout`, {
+      method: 'POST',
+      headers: { Cookie: cookieValue },
+    });
+    assert.strictEqual(logoutRes.status, 204);
+
+    // 4. Attempt to access authenticated endpoint with the old saved token
+    const afterLogoutRes = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { Cookie: cookieValue },
+    });
+    assert.strictEqual(afterLogoutRes.status, 401, 'Logged out JWT must be rejected with 401');
+    const errData = await afterLogoutRes.json();
+    assert.strictEqual(errData.error, 'Invalid or expired session');
+  });
 });

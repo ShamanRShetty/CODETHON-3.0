@@ -26,6 +26,18 @@ const envSchema = z
     SMTP_PASS: z.string().optional(),
     DB_PATH: z.string().default('./storage/vaultlink.sqlite'),
     NODE_ENV: z.string().default('development'),
+    TRUST_PROXY: z
+      .union([z.boolean(), z.string(), z.number()])
+      .default(false)
+      .transform((val) => {
+        if (typeof val === 'string') {
+          if (val.toLowerCase() === 'true' || val === '1') return true;
+          if (val.toLowerCase() === 'false' || val === '0') return false;
+          if (/^\d+$/.test(val)) return Number(val);
+          return val;
+        }
+        return Boolean(val);
+      }),
   })
   .superRefine((data, ctx) => {
     if (data.NODE_ENV === 'production') {

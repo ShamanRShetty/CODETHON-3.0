@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 
@@ -13,9 +14,10 @@ function getOtpSecret() {
  * @param {number} params.shareId
  * @param {string} params.email
  * @param {number} [params.shareExpiresAt]
+ * @param {string} [params.ip]
  * @returns {string} JWT token
  */
-function signOtpSession({ shareId, email, shareExpiresAt }) {
+function signOtpSession({ shareId, email, shareExpiresAt, ip }) {
   const secret = getOtpSecret();
   const normalizedEmail = (email || '').toLowerCase().trim();
 
@@ -28,10 +30,13 @@ function signOtpSession({ shareId, email, shareExpiresAt }) {
     expirySeconds = Math.max(1, Math.min(maxSessionSeconds, secUntilShareExpiry));
   }
 
+  const ipHash = ip ? crypto.createHash('sha256').update(String(ip)).digest('hex').slice(0, 16) : null;
+
   return jwt.sign(
     {
       shareId,
       email: normalizedEmail,
+      ipHash,
     },
     secret,
     { expiresIn: expirySeconds }
@@ -40,13 +45,14 @@ function signOtpSession({ shareId, email, shareExpiresAt }) {
 
 /**
  * Verify an OTP session JWT.
- * Returns decoded payload { shareId, email } if valid and matches expected shareId, else null.
+ * Returns decoded payload { shareId, email } if valid and matches expected shareId and IP, else null.
  *
  * @param {string} token
  * @param {number} [expectedShareId]
+ * @param {string} [expectedIp]
  * @returns {{ shareId: number, email: string } | null}
  */
-function verifyOtpSession(token, expectedShareId) {
+function verifyOtpSession(token, expectedShareId, expectedIp) {
   if (!token) return null;
   try {
     const secret = getOtpSecret();
@@ -56,6 +62,12 @@ function verifyOtpSession(token, expectedShareId) {
     }
     if (expectedShareId !== undefined && decoded.shareId !== expectedShareId) {
       return null;
+    }
+    if (decoded.ipHash && expectedIp) {
+      const currentIpHash = crypto.createHash('sha256').update(String(expectedIp)).digest('hex').slice(0, 16);
+      if (decoded.ipHash !== currentIpHash) {
+        return null;
+      }
     }
     return {
       shareId: decoded.shareId,

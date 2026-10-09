@@ -53,4 +53,24 @@ router.post('/:id/read', requireAuth, (req, res, next) => {
   }
 });
 
+// POST /api/notifications/read-all (Mark all notifications as read for authenticated user)
+router.post('/read-all', requireAuth, (req, res, next) => {
+  try {
+    db.prepare('UPDATE notifications SET read = 1 WHERE user_id = ? AND read = 0').run(req.user.id);
+    return res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Alias for convenience
+router.post('/readall', requireAuth, (req, res, next) => {
+  try {
+    db.prepare('UPDATE notifications SET read = 1 WHERE user_id = ? AND read = 0').run(req.user.id);
+    return res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

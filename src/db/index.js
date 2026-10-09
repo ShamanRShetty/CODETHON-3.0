@@ -23,6 +23,12 @@ const schemaPath = path.join(__dirname, 'schema.sql');
 const schemaSql = fs.readFileSync(schemaPath, 'utf8');
 db.exec(schemaSql);
 
+try {
+  db.prepare('ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0').run();
+} catch (e) {
+  // column already exists
+}
+
 module.exports = db;
 module.exports.db = db;
 module.exports.getDb = () => db;

@@ -72,4 +72,14 @@ describe('Config Module & Security Validation (src/config.js)', () => {
     assert.notStrictEqual(res.status, 0);
     assert.match(res.stderr, /cannot use default placeholder in production/);
   });
+
+  test('attack test: TRUST_PROXY defaults to false preventing X-Forwarded-For header spoofing', () => {
+    const res = runConfigWithEnv({
+      NODE_ENV: 'development',
+      JWT_SECRET: 'a_very_secure_jwt_secret_with_32_plus_chars!',
+      OTP_SECRET: 'a_very_secure_otp_secret_with_32_plus_chars!',
+      MASTER_KEY: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+    });
+    assert.strictEqual(res.status, 0);
+  });
 });

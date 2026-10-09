@@ -14,8 +14,12 @@ const notificationsRoutes = require('./routes/notifications');
 
 const app = express();
 
-// Trust proxy for proper IP handling behind reverse proxies (Render, Railway, Nginx, Fly)
-app.set('trust proxy', 1);
+// Configurable trust proxy for secure IP handling behind verified reverse proxies
+if (config.TRUST_PROXY !== undefined && config.TRUST_PROXY !== false) {
+  app.set('trust proxy', config.TRUST_PROXY);
+} else {
+  app.set('trust proxy', false);
+}
 
 app.use(
   helmet({
@@ -56,12 +60,14 @@ app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
-// Global error handler - sanitize 500s in production
+// Global error handler - sanitize 500s and prevent stack/schema leakage
 app.use((err, req, res, next) => {
   const status = err.status || err.statusCode || 500;
-  const isProd = (process.env.NODE_ENV || config.NODE_ENV) === 'production';
-  const message = status >= 500 && isProd ? 'Internal server error' : err.message || 'Internal server error';
-  res.status(status).json({ error: message });
+  if (status >= 500) {
+    console.error('[Server Error]', err.stack || err.message || err);
+    return res.status(status).json({ error: 'Internal server error' });
+  }
+  return res.status(status).json({ error: err.message || 'Request failed' });
 });
 
 if (require.main === module) {

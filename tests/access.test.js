@@ -353,4 +353,40 @@ describe('Access Checker (src/lib/access.js)', () => {
     const logs = db.prepare('SELECT * FROM download_logs WHERE share_id = ? AND success = 1').all(badShareId);
     assert.strictEqual(logs.length, 0, 'No success log should be written on decrypt failure');
   });
+
+  test('attack test: concurrent consumeDownload strictly enforces download limit atomically without extra decryptions', async () => {
+    const token = generateToken();
+    const tokenHash = hashToken(token);
+    const limitShareRes = db
+      .prepare(
+        `INSERT INTO shares (file_id, token_hash, expires_at, revoked_at, max_downloads, download_count, created_at)
+         VALUES (?, ?, ?, NULL, 1, 0, ?)`
+      )
+      .run(fileId, tokenHash, Date.now() + 3600000, Date.now());
+    const limitShareId = Number(limitShareRes.lastInsertRowid);
+
+    // Launch 5 parallel consumeDownload calls for max_downloads: 1
+    const parallelCalls = Array.from({ length: 5 }, (_, i) =>
+      consumeDownload({
+        shareId: limitShareId,
+        email: 'recipient@example.com',
+        ip: `192.168.1.${10 + i}`,
+        userAgent: 'ConcurrentTester',
+      })
+        .then((res) => ({ success: true, res }))
+        .catch((err) => ({ success: false, error: err.message }))
+    );
+
+    const outcomes = await Promise.all(parallelCalls);
+    const successes = outcomes.filter((o) => o.success);
+    const failures = outcomes.filter((o) => !o.success);
+
+    assert.strictEqual(successes.length, 1, 'Exactly 1 download must succeed');
+    assert.strictEqual(failures.length, 4, '4 downloads must fail with limit');
+    failures.forEach((f) => assert.strictEqual(f.error, 'LIMIT'));
+
+    // Final download count in DB must be exactly 1
+    const shareAfter = db.prepare('SELECT download_count FROM shares WHERE id = ?').get(limitShareId);
+    assert.strictEqual(shareAfter.download_count, 1);
+  });
 });

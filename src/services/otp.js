@@ -119,64 +119,76 @@ function verifyOtp(shareId, email, code, { ip, userAgent } = {}) {
     return { ok: false, reason: 'BAD_OTP' };
   }
 
-  // Find latest unused OTP row for this share and email
-  const otpRow = db
-    .prepare(
-      `SELECT id, share_id, email, code_hash, expires_at, attempts, used
-       FROM otp_codes
-       WHERE share_id = ? AND email = ? AND used = 0
-       ORDER BY id DESC
-       LIMIT 1`
-    )
-    .get(shareId, normalizedEmail);
+  let verifyResult = { ok: false, reason: 'BAD_OTP' };
 
-  if (!otpRow) {
-    logOtpFailure(shareId, normalizedEmail, ip, userAgent, 'BAD_OTP');
-    return { ok: false, reason: 'BAD_OTP' };
-  }
+  const tx = db.transaction(() => {
+    // Find latest unused OTP row for this share and email
+    const otpRow = db
+      .prepare(
+        `SELECT id, share_id, email, code_hash, expires_at, attempts, used
+         FROM otp_codes
+         WHERE share_id = ? AND email = ? AND used = 0
+         ORDER BY id DESC
+         LIMIT 1`
+      )
+      .get(shareId, normalizedEmail);
 
-  // Check if code was already locked (max 5 attempts reached)
-  if (otpRow.attempts >= 5) {
-    logOtpFailure(shareId, normalizedEmail, ip, userAgent, 'OTP_LOCKED');
-    return { ok: false, reason: 'OTP_LOCKED' };
-  }
-
-  // Check if code has expired (5-minute window)
-  const now = Date.now();
-  if (now > otpRow.expires_at) {
-    logOtpFailure(shareId, normalizedEmail, ip, userAgent, 'BAD_OTP');
-    return { ok: false, reason: 'BAD_OTP' };
-  }
-
-  // Calculate HMAC of input code and timing-safe comparison
-  const candidateHash = hashOtpCode(normalizedCode);
-  const candidateBuf = Buffer.from(candidateHash, 'hex');
-  const storedBuf = Buffer.from(otpRow.code_hash, 'hex');
-
-  const isMatch = candidateBuf.length === storedBuf.length && crypto.timingSafeEqual(candidateBuf, storedBuf);
-
-  if (!isMatch) {
-    // Increment attempts on incorrect code
-    const newAttempts = otpRow.attempts + 1;
-    db.prepare('UPDATE otp_codes SET attempts = ? WHERE id = ?').run(newAttempts, otpRow.id);
-
-    if (newAttempts >= 5) {
-      logOtpFailure(shareId, normalizedEmail, ip, userAgent, 'OTP_LOCKED');
-      return { ok: false, reason: 'OTP_LOCKED' };
+    if (!otpRow) {
+      verifyResult = { ok: false, reason: 'BAD_OTP' };
+      return;
     }
 
-    logOtpFailure(shareId, normalizedEmail, ip, userAgent, 'BAD_OTP');
-    return { ok: false, reason: 'BAD_OTP' };
+    // Check if code was already locked (max 5 attempts reached)
+    if (otpRow.attempts >= 5) {
+      verifyResult = { ok: false, reason: 'OTP_LOCKED' };
+      return;
+    }
+
+    // Check if code has expired (5-minute window)
+    const now = Date.now();
+    if (now > otpRow.expires_at) {
+      verifyResult = { ok: false, reason: 'BAD_OTP' };
+      return;
+    }
+
+    // Calculate HMAC of input code and timing-safe comparison
+    const candidateHash = hashOtpCode(normalizedCode);
+    const candidateBuf = Buffer.from(candidateHash, 'hex');
+    const storedBuf = Buffer.from(otpRow.code_hash, 'hex');
+
+    const isMatch =
+      candidateBuf.length === storedBuf.length && crypto.timingSafeEqual(candidateBuf, storedBuf);
+
+    if (!isMatch) {
+      // Increment attempts atomically in SQL
+      db.prepare('UPDATE otp_codes SET attempts = attempts + 1 WHERE id = ?').run(otpRow.id);
+      const updatedRow = db.prepare('SELECT attempts FROM otp_codes WHERE id = ?').get(otpRow.id);
+
+      if (updatedRow && updatedRow.attempts >= 5) {
+        verifyResult = { ok: false, reason: 'OTP_LOCKED' };
+      } else {
+        verifyResult = { ok: false, reason: 'BAD_OTP' };
+      }
+      return;
+    }
+
+    // Code is valid: mark as used (single use)
+    db.prepare('UPDATE otp_codes SET used = 1 WHERE id = ?').run(otpRow.id);
+
+    verifyResult = {
+      ok: true,
+      shareId,
+      email: normalizedEmail,
+    };
+  });
+
+  tx();
+
+  if (!verifyResult.ok) {
+    logOtpFailure(shareId, normalizedEmail, ip, userAgent, verifyResult.reason);
   }
 
-  // Code is valid: mark as used (single use)
-  db.prepare('UPDATE otp_codes SET used = 1 WHERE id = ?').run(otpRow.id);
-
-  return {
-    ok: true,
-    shareId,
-    email: normalizedEmail,
-  };
+  return verifyResult;
 }
 
 module.exports = {

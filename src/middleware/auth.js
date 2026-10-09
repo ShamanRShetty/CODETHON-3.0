@@ -17,10 +17,16 @@ function requireAuth(req, res, next) {
       return res.status(401).json({ error: 'Invalid session' });
     }
 
-    const user = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(decoded.id);
+    const user = db.prepare('SELECT id, name, email, token_version FROM users WHERE id = ?').get(decoded.id);
 
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
+    }
+
+    const userTokenVersion = user.token_version ?? 0;
+    const decodedTokenVersion = decoded.tokenVersion ?? 0;
+    if (userTokenVersion !== decodedTokenVersion) {
+      return res.status(401).json({ error: 'Invalid or expired session' });
     }
 
     req.user = {

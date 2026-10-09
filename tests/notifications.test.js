@@ -265,4 +265,25 @@ describe('Notifications API & Service (B-03, D-02)', () => {
     const rowAfter = db.prepare('SELECT read FROM notifications WHERE id = ?').get(notifId);
     assert.strictEqual(rowAfter.read, 1);
   });
+
+  test('POST /api/notifications/read-all marks all user notifications as read', async () => {
+    db.prepare('DELETE FROM notifications').run();
+    const now = Date.now();
+
+    db.prepare(
+      `INSERT INTO notifications (user_id, share_id, message, read, created_at)
+       VALUES (?, ?, 'Alert 1', 0, ?), (?, ?, 'Alert 2', 0, ?)`
+    ).run(user1Id, user1ShareId, now - 1000, user1Id, user1ShareId, now);
+
+    const res = await fetch(`${baseUrl}/api/notifications/read-all`, {
+      method: 'POST',
+      headers: { Cookie: user1Cookie },
+    });
+    assert.strictEqual(res.status, 204);
+
+    const unreadCount = db
+      .prepare('SELECT COUNT(*) as c FROM notifications WHERE user_id = ? AND read = 0')
+      .get(user1Id).c;
+    assert.strictEqual(unreadCount, 0);
+  });
 });

@@ -131,7 +131,7 @@ router.delete('/:id', requireAuth, (req, res, next) => {
     }
 
     const file = db
-      .prepare('SELECT id, owner_id FROM files WHERE id = ? AND deleted_at IS NULL')
+      .prepare('SELECT id, owner_id, stored_name FROM files WHERE id = ? AND deleted_at IS NULL')
       .get(fileId);
 
     // Return 404 (not 403) for files the user does not own or files that are deleted
@@ -149,6 +149,12 @@ router.delete('/:id', requireAuth, (req, res, next) => {
     });
 
     deleteTransaction();
+
+    // Clean up physical encrypted ciphertext blob from disk
+    if (file.stored_name) {
+      const storedPath = path.join(storageDir, file.stored_name);
+      fs.promises.unlink(storedPath).catch(() => {});
+    }
 
     return res.status(200).json({ message: 'File deleted and active shares revoked' });
   } catch (err) {

@@ -96,6 +96,7 @@ router.post('/:token/otp/verify', otpVerifyLimiter, (req, res) => {
     shareId: share.id,
     email: result.email,
     shareExpiresAt: share.expires_at,
+    ip,
   });
 
   const isSecure = req.secure || process.env.NODE_ENV === 'production';
@@ -164,6 +165,23 @@ router.post('/:token/download', downloadLimiter, async (req, res) => {
 
     return res.status(200).send(download.buffer);
   } catch (err) {
+    if (shareId && (err.message === 'LIMIT' || err.message === 'REVOKED' || err.message === 'EXPIRED')) {
+      try {
+        const share = db
+          .prepare('SELECT s.id, f.owner_id FROM shares s JOIN files f ON s.file_id = f.id WHERE s.id = ?')
+          .get(shareId);
+        if (share) {
+          const { notify } = require('../services/notifier');
+          db.prepare(
+            `INSERT INTO download_logs (share_id, user_email, ip, user_agent, success, reason, at)
+             VALUES (?, ?, ?, ?, 0, ?, ?)`
+          ).run(shareId, null, ip || null, userAgent || null, err.message, Date.now());
+          notify(share.owner_id, shareId, err.message, `Blocked access attempt (${err.message})`, Date.now());
+        }
+      } catch (logErr) {
+        // ignore logging error
+      }
+    }
     // If decryption or access fails, never reveal internal details or partial bytes
     return res.status(404).json({ error: 'unavailable' });
   }

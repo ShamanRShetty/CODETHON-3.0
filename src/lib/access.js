@@ -106,7 +106,7 @@ function checkAccess({ token, otpSession, password, ip, userAgent }) {
 
   // 5. Restricted share recipient / OTP check
   if (share.restricted) {
-    const session = verifyOtpSession(otpSession, share.id);
+    const session = verifyOtpSession(otpSession, share.id, ip);
     if (!session || !session.email) {
       logFailure(
         share.id,
@@ -176,7 +176,6 @@ function checkAccess({ token, otpSession, password, ip, userAgent }) {
  * @returns {Promise<{ buffer: Buffer, originalName: string, mime: string, size: number }>}
  */
 async function consumeDownload({ shareId, email, ip, userAgent }) {
-  const now = Date.now();
   const share = db
     .prepare(
       `SELECT
@@ -204,55 +203,65 @@ async function consumeDownload({ shareId, email, ip, userAgent }) {
     throw new Error('NOT_FOUND');
   }
 
-  if (share.revoked_at != null) {
-    throw new Error('REVOKED');
-  }
+  let reserved = false;
 
-  if (now > share.expires_at) {
-    throw new Error('EXPIRED');
-  }
-
-  if (share.max_downloads != null && share.download_count >= share.max_downloads) {
-    throw new Error('LIMIT');
-  }
-
-  // Decrypt file BEFORE committing download count and success log
-  const storedPath = path.join(storageDir, share.stored_name);
-  const ciphertext = await fs.promises.readFile(storedPath);
-
-  // If decryption fails, decryptFile throws and zero partial data or count increment happens
-  const buffer = decryptFile({
-    ciphertext,
-    wrappedKey: share.wrapped_key,
-    iv: share.iv,
-    authTag: share.auth_tag,
-  });
-
-  // Atomic SQLite transaction: verify limits and increment download count + log
-  const tx = db.transaction(() => {
+  // 1. Atomic reservation: verify limits and increment download count before heavy decryption
+  const reserveTx = db.transaction(() => {
     const txNow = Date.now();
     const current = db
       .prepare('SELECT download_count, max_downloads, revoked_at, expires_at FROM shares WHERE id = ?')
       .get(shareId);
 
-    if (!current || current.revoked_at != null || txNow > current.expires_at) {
-      throw new Error('REVOKED_OR_EXPIRED');
+    if (!current) {
+      throw new Error('NOT_FOUND');
     }
-
+    if (current.revoked_at != null) {
+      throw new Error('REVOKED');
+    }
+    if (txNow > current.expires_at) {
+      throw new Error('EXPIRED');
+    }
     if (current.max_downloads != null && current.download_count >= current.max_downloads) {
       throw new Error('LIMIT');
     }
 
-    // Increment download count
     db.prepare('UPDATE shares SET download_count = download_count + 1 WHERE id = ?').run(shareId);
+    reserved = true;
+  });
 
-    // Insert success log
+  reserveTx();
+
+  // 2. Read and decrypt file payload
+  let buffer;
+  try {
+    const storedPath = path.join(storageDir, share.stored_name);
+    const ciphertext = await fs.promises.readFile(storedPath);
+    buffer = decryptFile({
+      ciphertext,
+      wrappedKey: share.wrapped_key,
+      iv: share.iv,
+      authTag: share.auth_tag,
+    });
+  } catch (err) {
+    // Roll back reservation if decryption fails
+    if (reserved) {
+      try {
+        db.prepare('UPDATE shares SET download_count = MAX(0, download_count - 1) WHERE id = ?').run(shareId);
+      } catch (rollbackErr) {
+        // ignore
+      }
+    }
+    throw err;
+  }
+
+  // 3. Commit audit log and notification
+  const commitTx = db.transaction(() => {
+    const txNow = Date.now();
     db.prepare(
       `INSERT INTO download_logs (share_id, user_email, ip, user_agent, success, reason, at)
        VALUES (?, ?, ?, ?, 1, 'OK', ?)`
     ).run(shareId, email || null, ip || null, userAgent || null, txNow);
 
-    // Insert owner notification
     const recipientInfo = email ? email : ip ? `visitor from ${ip}` : 'visitor';
     notify(
       share.owner_id,
@@ -263,7 +272,7 @@ async function consumeDownload({ shareId, email, ip, userAgent }) {
     );
   });
 
-  tx();
+  commitTx();
 
   return {
     buffer,

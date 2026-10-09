@@ -500,5 +500,52 @@ describe('Public Download API (src/routes/public.js)', () => {
     const buffer = await res.arrayBuffer();
     assert.strictEqual(Buffer.from(buffer).toString('utf8'), 'UTF-8 test content');
   });
+
+  test('attack test: OTP session token bound to IP A cannot be reused from IP B in checkAccess', async () => {
+    const { checkAccess } = require('../src/lib/access');
+    const { signOtpSession } = require('../src/lib/otpSession');
+
+    const token = generateToken();
+    const tokenHash = hashToken(token);
+    const now = Date.now();
+
+    const shareRes = db
+      .prepare(
+        `INSERT INTO shares (file_id, token_hash, expires_at, revoked_at, max_downloads, download_count, restricted, created_at)
+         VALUES (?, ?, ?, NULL, NULL, 0, 1, ?)`
+      )
+      .run(fileId, tokenHash, now + 3600000, now);
+    const restrictedShareId = Number(shareRes.lastInsertRowid);
+
+    db.prepare('INSERT INTO share_recipients (share_id, email) VALUES (?, ?)').run(
+      restrictedShareId,
+      'legit.recipient@example.com'
+    );
+
+    // Sign session token bound to IP 192.168.1.100
+    const otpSession = signOtpSession({
+      shareId: restrictedShareId,
+      email: 'legit.recipient@example.com',
+      shareExpiresAt: now + 3600000,
+      ip: '192.168.1.100',
+    });
+
+    // 1. Legitimate request from same IP succeeds
+    const legitAccess = checkAccess({
+      token,
+      otpSession,
+      ip: '192.168.1.100',
+    });
+    assert.strictEqual(legitAccess.ok, true);
+
+    // 2. Attacker replaying cookie from IP 203.0.113.50 is rejected
+    const attackerAccess = checkAccess({
+      token,
+      otpSession,
+      ip: '203.0.113.50',
+    });
+    assert.strictEqual(attackerAccess.ok, false);
+    assert.strictEqual(attackerAccess.reason, 'NOT_ON_LIST');
+  });
 });
 

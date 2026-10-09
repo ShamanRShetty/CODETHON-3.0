@@ -226,6 +226,43 @@ describe('OTP & Mailer Service (D-01)', () => {
         .get(shareId);
       assert.strictEqual(log.reason, 'BAD_OTP');
     });
+
+    test('attack test: concurrent brute-force attempts are strictly serialized and cannot exceed 5 attempts before locking', async () => {
+      const code = '778899';
+      const codeHash = crypto
+        .createHmac('sha256', process.env.OTP_SECRET || config.OTP_SECRET)
+        .update(code)
+        .digest('hex');
+
+      db.prepare(
+        `INSERT INTO otp_codes (share_id, email, code_hash, expires_at, attempts, used)
+         VALUES (?, ?, ?, ?, 0, 0)`
+      ).run(shareId, testRecipient, codeHash, Date.now() + 300 * 1000);
+
+      // Launch 10 parallel incorrect verification attempts simultaneously
+      const parallelGuesses = Array.from({ length: 10 }, (_, i) => `wrong${i}`);
+      const results = await Promise.all(
+        parallelGuesses.map((guess) =>
+          Promise.resolve().then(() =>
+            verifyOtp(shareId, testRecipient, guess, { ip: '198.51.100.5', userAgent: 'attacker' })
+          )
+        )
+      );
+
+      // All 10 must fail
+      results.forEach((r) => assert.strictEqual(r.ok, false));
+
+      // Check the database attempts count: must be at least 5
+      const otpRow = db
+        .prepare('SELECT attempts FROM otp_codes WHERE share_id = ? AND email = ?')
+        .get(shareId, testRecipient);
+      assert.ok(otpRow.attempts >= 5, `Attempts count must reach at least 5, got ${otpRow.attempts}`);
+
+      // Even the correct code must now be completely locked out
+      const lockedAttempt = verifyOtp(shareId, testRecipient, code);
+      assert.strictEqual(lockedAttempt.ok, false);
+      assert.strictEqual(lockedAttempt.reason, 'OTP_LOCKED');
+    });
   });
 
   describe('mailer.js', () => {

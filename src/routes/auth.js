@@ -100,6 +100,7 @@ router.post('/login', loginLimiter, validate(loginSchema), async (req, res, next
       {
         id: user.id,
         email: user.email,
+        tokenVersion: user.token_version ?? 0,
       },
       getJwtSecret(),
       { expiresIn: '7d' }
@@ -119,6 +120,18 @@ router.post('/login', loginLimiter, validate(loginSchema), async (req, res, next
 
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
+  const sessionToken = req.cookies?.session;
+  if (sessionToken) {
+    try {
+      const decoded = jwt.verify(sessionToken, getJwtSecret());
+      if (decoded && decoded.id) {
+        db.prepare('UPDATE users SET token_version = token_version + 1 WHERE id = ?').run(decoded.id);
+      }
+    } catch (e) {
+      // ignore invalid token on logout
+    }
+  }
+
   res.clearCookie('session', {
     httpOnly: true,
     sameSite: 'lax',
